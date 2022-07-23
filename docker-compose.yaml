@@ -1,0 +1,49 @@
+version: '3'
+
+networks:
+  app-tier:
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24
+
+services:
+ web:
+  build: .
+  volumes:
+   - .:/usr/src/app
+  container_name: dndweb_local
+  tty: true
+  ports:
+   - 8000:8000
+   - 3000-3999:3000-3999
+   - 3000-3999:3000-3999/udp
+  environment:
+   - ENVIRONMENT=local
+   - POSTGRES_DB=dndweb
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=postgres
+  command: python manage.py runserver 0.0.0.0:8000
+  depends_on:
+    - memcached
+    - db
+  networks:
+    - app-tier
+ db:
+  image: postgres
+  container_name: db
+  volumes:
+   - ../dndpostgresdata/db:/var/lib/postgresql/data
+  environment:
+   - POSTGRES_DB=dndweb
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=postgres
+  ports:
+    - 5432:5432
+  networks:
+      - app-tier
+ memcached:
+  image: 'bitnami/memcached:latest'
+  ports:
+    - 11211:11211
+  networks:
+      - app-tier

@@ -1,0 +1,237 @@
+{% extends "worlds/base.html" %}
+
+{% block extra_head %}
+<style type="text/css">
+  #drawing-board {
+    width:  100%;
+    height:  600px;
+    margin: 0px;
+    padding: 0px;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <h1>{{ object.name }}</h1>
+      <small>Cols: {{ object.world_x_cols }} Rows: {{ object.world_y_rows }}</small>
+      <div class="card mt-4">
+        <div class="card-body">
+          <canvas id="drawing-board" class="border"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col p-2">
+      <button id="saveMapButton" class="btn btn-primary float-end">Save Map</button>
+      <button id="resetMapButton" class="btn btn-danger float-end">Reset Map</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_javascript %}
+<script type="text/javascript">
+(function() {
+  const tile_width = 20;
+  const tile_height = 20;
+  const border_width = 2;
+  const border_color = "#000";
+
+  class WorldTile {
+    constructor(x, y, tile_width, tile_height) {
+      this.x = x;
+      this.y = y;
+      this.width = tile_width;
+      this.height = tile_height;
+      this.terrain_mask = 0;
+    }
+
+    get_terrain_mask_color(mask) {
+      if(mask == 1) {
+        return 'red';
+      } else {
+        // will also catch mask == 0
+        return 'white';
+      }
+    }
+
+    set_layers(layers) {
+      this.layers = layers;
+    }
+
+    is_point_inside(mouseX, mouseY) {
+      if((mouseX >= this.x && mouseX <= (this.x + this.width)) &&
+           (mouseY >= this.y && mouseY <= (this.y + this.height))) {
+          return true;
+      }
+      return false;
+    }
+
+    draw_border(ctx) {
+      ctx.lineWidth = border_width;
+      ctx.fillStyle = border_color;
+      ctx.strokeRect(
+        this.x,
+        this.y,
+        this.width,
+        this.height
+      );
+    }
+
+    set_terrain_mask(ctx, mask) {
+      this.terrain_mask = mask;
+      ctx.fillStyle = this.get_terrain_mask_color(mask);
+      ctx.fillRect(
+        this.x+border_width/2,
+        this.y+border_width/2,
+        this.width-border_width,
+        this.height-border_width);
+    }
+  }
+
+  const canvas = document.getElementById('drawing-board');
+  const ctx = canvas.getContext('2d');
+  const canvasWidth = canvas.offsetWidth;
+  const canvasHeight = canvas.offsetHeight;
+  const canvasOffsetX = canvas.offsetLeft;
+  const canvasOffsetY = canvas.offsetTop;
+  
+  
+  console.log(canvas.width);
+  console.log(canvas.height);
+
+  canvas.width = canvasWidth - canvasOffsetX;
+  canvas.height = canvasHeight - canvasOffsetY;
+
+  const x_cols = {{ object.world_x_cols }};
+  const y_rows = {{ object.world_y_rows }};
+  const mid_point = [canvas.offsetWidth/2, canvas.offsetHeight/2];
+  console.log(x_cols);
+  // let's draw the boxes based on the world
+
+  var tiles = [];
+  var tile_coord_map = {};
+  for (let y = 0; y < y_rows; y++) {
+    for (let x = 0; x < x_cols; x++) {
+      var tile = new WorldTile(
+        (x*tile_width)+(border_width*2)+((canvasWidth/2)-(x_cols*tile_width)/2),
+        (y*tile_height)+(border_width*2)+((canvasHeight/2)-(y_rows*tile_height)/2),
+        tile_width,
+        tile_height)
+      tiles.push(tile);
+      tile_coord_map[tile.x + ',' + tile.y] = tile
+    }
+  }
+
+  function draw_rectangles(tiles) {
+    ctx.lineWidth = border_width;
+    ctx.fillStyle = border_color;
+    for(let i = 0; i < tiles.length; i++) {
+      tiles[i].draw_border(ctx);
+    }
+  }
+
+  
+
+  function highlight_position_tile(clientX, clientY) {
+    for (const [key, tile] of Object.entries(tile_coord_map)) {
+      if(tile.is_point_inside(clientX, clientY) && tile.terrain_mask != 1) {
+        tile.set_terrain_mask(ctx, 1);
+      }
+    }
+  }
+
+  function fill_terrain_mask(cached_mask) {
+    for(let i = 0; i < tiles.length; i++) {
+      tiles[i].set_terrain_mask(ctx, cached_mask[i]);
+    }
+  }
+
+  function get_x_y_from_counter(counter) {
+    return [Math.floor(counter / x_cols), counter % x_cols ];
+  }
+
+  function generate_terrain_mask_array() {
+    var terrain_mask_array = [];
+    for(let i = 0; i < tiles.length; i++) {
+      terrain_mask_array.push(tiles[i].terrain_mask);
+    }
+    return terrain_mask_array;
+  }
+
+  function generate_empty_terrain_mask_array() {
+    var terrain_mask_array = [];
+    for(let i = 0; i < tiles.length; i++) {
+      terrain_mask_array.push(0);
+    }
+    return terrain_mask_array;
+  }
+
+
+  draw_rectangles(tiles);
+  {% if object.world_layers %}
+  fill_terrain_mask({{ object.world_layers_list }});
+  {% endif %}
+  var check_for_tiles = false;
+
+  canvas.addEventListener('mousemove', (e) => {
+    if(check_for_tiles) {
+      highlight_position_tile(e.offsetX, e.offsetY);
+    }
+    
+  });
+
+  canvas.addEventListener('mousedown', (e) => {
+    check_for_tiles = true;
+  });
+
+  canvas.addEventListener('mouseup', (e) => {
+    check_for_tiles = false;
+  });
+
+  document.getElementById('saveMapButton').addEventListener('click', (e) => {
+    e.preventDefault();
+    var payload = {
+      'world_layers': generate_terrain_mask_array()
+    }
+    fetch("/api/worlds/{{ object.uuid }}/",
+      {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          }
+      }
+    ).then(function(res){ return res.json(); })
+     .then(function(jsonResponse){console.log(jsonResponse);});
+  });
+
+  document.getElementById('resetMapButton').addEventListener('click', (e) => {
+    e.preventDefault();
+    var payload = {
+      'world_layers': generate_empty_terrain_mask_array()
+    }
+    fetch("/api/worlds/{{ object.uuid }}/",
+      {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          }
+      }
+    ).then(function(res){ return res.json(); })
+     .then(function(jsonResponse){console.log(jsonResponse);});
+  });
+
+
+
+})();
+
+</script>
+{% endblock %}
