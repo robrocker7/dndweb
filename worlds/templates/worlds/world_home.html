@@ -30,11 +30,13 @@
           <div id="layer_sidebar">
             {% include "worlds/_partials/nav_toolbar.html" %}
             <ol class="list-group list-group-numbered" id="layer_list_group">
-              <li class="list-group-item d-flex justify-content-between align-items-start" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" >
+              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" >
                 <div class="ms-2 me-auto">
                   <div class="fw-bold" rv-on-blur="edit_name" rv-on-click="select_text" contenteditable="true" >{item.name}</div>
                 </div>
                 <span class="badge bg-primary rounded-pill">{item.obj_count}</span>
+                <div rv-if="item.is_tile_layer" style="padding: 0 .70rem;"></div>
+                <a href="#" class="btn btn-link text-danger" rv-on-click="remove_layer" rv-if="item.can_delete" style="--bs-btn-padding-y: 0rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"><i class="bi bi-x"></i></a>
               </li>
             </ol>
           </div>
@@ -98,12 +100,25 @@
     },
     drag_over(event, model) {
       event.preventDefault();
+      this.classList.remove('over');
     },
     drag_drop(event, model) {
       // event.stopPropagation();
+      let finalSrcIndex = dragSrcIndex;
+      let finalDestIndex = model.$index;
       if (dragSrcIndex !== model.$index) {
-        _dragged_item = model.$parent.items.splice(dragSrcIndex, 1);
-        model.$parent.items.splice(model.$index-1, 0, _dragged_item[0]);
+          if(model.$index == 0) {
+            finalSrcIndex = dragSrcIndex;
+            finalDestIndex = 0;
+          }
+        _dragged_item = model.$parent.items.splice(finalSrcIndex, 1);
+        model.$parent.items.splice(finalDestIndex, 0, _dragged_item[0]);
+        
+      }
+
+      // update order
+      for(var i = 0; i < model.$parent.items; i++) {
+        model.$parent.items[i].order = i;
       }
 
       return false;
@@ -116,8 +131,16 @@
     },
     push(layer) {
       //this.items[layer.uuid] = layer;
-      this.items.push(layer);
+      this.items.splice(0, 0, layer);
+      //this.items.push(layer);
       this.map[layer.uuid] = layer;
+    },
+    remove_layer(event, model) {
+      model.$parent.items.splice(model.$index, 1);
+      // update order
+      for(var i = 0; i < model.$parent.items; i++) {
+        model.$parent.items[i].order = i;
+      }
     },
     reset() {
       this.items = {};
@@ -133,6 +156,9 @@
       this.items.sort(function (a, b) {
         return (a.value || 0) - (b.value || 0)
       })
+    },
+    is_not_tile_layer(event, model) {
+      console.log(this);
     }
   }
   tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
@@ -144,7 +170,8 @@
     '{{ object.uuid }}',
     layerModels);
   {% if object.world_layers %}
-  window.world_canvas.fill_terrain_mask({{ object.world_layers_list }});
+  window.world_canvas.populate_layers_from_json({{ object.world_layers_list|safe }});
+  window.world_canvas.fill_terrain_mask({{ object.world_layers_list.0.masks }});
   {% endif %}
 })();
 

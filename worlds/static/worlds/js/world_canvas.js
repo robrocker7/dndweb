@@ -118,6 +118,8 @@ class WorldTile {
     canvas_obj.on('mousedown', function() {
       if(window.world_canvas.toolbar.current_terrain_mask != null) {
         self.set_terrain_mask(window.world_canvas.toolbar.current_terrain_mask);
+        console.log(self.layer_placement[0])
+        console.log(self.layer_placement[1])
         self.layer_placement[0].obj_mask_array[self.layer_placement[1]] = window.world_canvas.toolbar.current_terrain_mask;
         window.world_canvas.canvas.renderAll();
       }
@@ -167,6 +169,7 @@ class WorldLayer {
     this.obj_count = 0;  // used by the UI to show how many items are in the array
     this.obj_array = [];  // used to store which items are in the layer
     this.obj_mask_array = [];  // used for quick serialization
+    this.is_tile_layer = false; // used for layer identification in layer submenu 
   }
 
   add_object(obj) {
@@ -185,8 +188,20 @@ class WorldLayer {
     this.name = name;
   }
 
-  update_object_by_index(object, index_in_layer) {
-    this.obj_mask_array[index_in_layer] = object.mask;
+  get_payload() {
+    return {
+      'uuid': this.uuid,
+      'name': this.name,
+      'order': this.order,
+      'masks': this.obj_mask_array
+    }
+  }
+
+  can_delete() {
+    if(this.is_tile_layer) {
+      return false;
+    }
+    return true;
   }
 
 }
@@ -217,6 +232,7 @@ class WorldCanvas {
 
     this.canvas_layers = canvas_layers;
     this.tile_layer = new WorldLayer('Tiles', 1);
+    this.tile_layer.is_tile_layer = true;
     this.canvas_layers.push(this.tile_layer);
     this.canvas.add(this.tile_layer.canvas_obj);
 
@@ -274,7 +290,22 @@ class WorldCanvas {
     for(let x = 0; x < this.canvas_layers.get_length(); x++) {
       var layer = this.canvas_layers.get_by_index(x);
       console.log(layer);
-      layers.push(layer.obj_mask_array);
+      let payload = layer.get_payload();
+      layers.push(payload);
+    }
+    return layers;
+  }
+
+  generate_empty_world_layer_payload() {
+    var layers = [];
+    for(let x = 0; x < this.canvas_layers.get_length(); x++) {
+      var layer = this.canvas_layers.get_by_index(x);
+      let payload = layer.get_payload();
+      
+      if(layer.is_tile_layer) {
+        payload['masks'] = this.generate_empty_terrain_mask_array();
+      }
+      layers.push(payload);
     }
     return layers;
   }
@@ -285,6 +316,17 @@ class WorldCanvas {
       terrain_mask_array.push(0);
     }
     return terrain_mask_array;
+  }
+
+  populate_layers_from_json(json_array) {
+    // i starts at 1 because index 0 is tile layer
+    for(let i = 1; i < json_array.length; i++) {
+      let layer_attrs = json_array[i];
+      var layer = new WorldLayer(layer_attrs.name, layer_attrs.order);
+      layer.uuid = layer_attrs['uuid'];
+      layer.masks = layer_attrs.masks;
+      this.canvas_layers.push(layer);
+    }
   }
 
   setup_events() {
@@ -332,7 +374,7 @@ class WorldCanvas {
     document.getElementById('saveMapButton').addEventListener('click', (e) => {
       e.preventDefault();
       var payload = {
-        'world_layers': self.generate_terrain_mask_array()
+        'world_layers': self.generate_world_layer_payload().reverse()
       }
       console.log(payload)
       fetch("/api/worlds/"+self.object_uuid+"/",
@@ -351,7 +393,7 @@ class WorldCanvas {
     document.getElementById('resetMapButton').addEventListener('click', (e) => {
       e.preventDefault();
       var payload = {
-        'world_layers': self.generate_empty_terrain_mask_array()
+        'world_layers': self.generate_empty_world_layer_payload().reverse()
       }
       fetch("/api/worlds/"+self.object_uuid+"/",
         {
@@ -374,7 +416,7 @@ class WorldCanvas {
 
     document.getElementById('add_new_layer').addEventListener('click', (e) => {
       e.preventDefault();
-      var new_layer = new WorldLayer('New Layer', self.canvas_layers.length);
+      var new_layer = new WorldLayer('New Layer', self.canvas_layers.get_length()+1);
       self.canvas_layers.push(new_layer);
 
     });
