@@ -41,7 +41,8 @@ class Command(BaseCommand):
         #self.items_to_process()
         self.queue = Queue()
         self.cache_queue = Queue()
-        world_db_obj = WorldModel.objects.get(uuid='82122fb8-c7bb-4191-bb64-960887d8cd97')
+        self.world_uuid = '3ea56f07-c477-48a7-a77f-b34813647af3'
+        world_db_obj = WorldModel.objects.get(uuid=self.world_uuid)
         self.setup_socket('0.0.0.0', 3001)
         self.world = World(world_db_obj.world_x_cols,
                            world_db_obj.world_y_rows, world_uuid=world_db_obj.uuid)
@@ -97,7 +98,7 @@ class Command(BaseCommand):
             response = {'type': 'ready_response', 'payload':[float(i) for i in world_array.shape]}
 
         if request == 'terrain_request':
-            world_db_obj = WorldModel.objects.get(uuid='82122fb8-c7bb-4191-bb64-960887d8cd97')
+            world_db_obj = WorldModel.objects.get(uuid=self.world_uuid)
             terrain_mask = np.array(world_db_obj.world_layers_list).reshape(
                 world_db_obj.world_x_cols,
                 world_db_obj.world_y_rows)

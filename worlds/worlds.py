@@ -36,8 +36,8 @@ class World:
     def get_packet_world_payload(self):
         # because of UE coord system differences we need to rotate the grid
         _layers = self.layers.copy()
-        _layers[0] = np.flip(_layers[0], 0)
-        return _layers.flatten().tolist()
+        _layers[0] = np.rot90(_layers[0], -1)
+        return _layers[0].flatten().tolist()
 
     def transform_layer_updates(self, updates):
         xaxis = []

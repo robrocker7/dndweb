@@ -15,8 +15,8 @@ services:
   tty: true
   ports:
    - 8000:8000
-   - 3000-3999:3000-3999
-   - 3000-3999:3000-3999/udp
+   - 3000-3100:3000-3100
+   - 3000-3100:3000-3100/udp
   environment:
    - ENVIRONMENT=local
    - POSTGRES_DB=dndweb
