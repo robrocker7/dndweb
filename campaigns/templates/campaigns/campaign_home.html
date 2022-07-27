@@ -21,10 +21,76 @@
       </ul>
     </div>
   </div>
+  <button class="btn btn-primary float-end" id="newMapButton" data-bs-toggle="modal" data-bs-target="#newMapModal">New Map</button>
+  <h3 class="mt-2">My Maps</h3>
   <div class="row">
   	<div class="col">
-  		My Maps
+
+  		<ul class="list-group">
+        {% for map in maps %}
+        <li class="list-group-item">
+          {{ map.name }} - {{ map.world_x_cols }} x {{ map.world_y_rows }}
+        </li>
+        {% empty %}
+        <li class="list-group-item">
+          No Maps
+        </li>
+        {% endfor %}
+      </ul>
   	</div>
   </div>
 </div>
+
+<div class="modal" tabindex="-1" id="newMapModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Map</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="newMapForm" action="" method="POST">
+        <div class="modal-body">
+          {% bootstrap_form map_form %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" id="newMapSaveButton">Save changes</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
 {% endblock %}
+
+{% block extra_javascript %}
+<script>
+(function() {
+  document.getElementById('newMapSaveButton').addEventListener('click', (e) => {
+    var form = document.getElementById('newMapForm');
+    if (form.checkValidity() == false) {
+        return false;
+    }
+    e.preventDefault();
+    let formdata = new FormData(form);
+    var payload = serialize(formdata);
+    payload['campaign'] = '{{ campaign.uuid }}'; 
+    fetch("/api/maps/",
+      {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          }
+      }
+    ).then(function(res){ return res.json(); })
+     .then(function(jsonResponse){location.reload()});
+  });
+})();
+</script>
+{% endblock %}
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModalLive">
+    Launch demo modal
+  </button>

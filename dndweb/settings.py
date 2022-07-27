@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'campaigns',
     'dndweb',
     'users',
-    'worlds',
+    'maps',
 ]
 
 MIDDLEWARE = [

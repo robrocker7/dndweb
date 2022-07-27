@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from worlds.models import World
+from maps.models import Map
 
-class WorldAdmin(admin.ModelAdmin):
+class MapAdmin(admin.ModelAdmin):
     fields = ('uuid', 'name', 'world_x_cols', 'world_y_rows')
     readonly_fields = ('uuid',)
 
 
-admin.site.register(World, WorldAdmin)
+admin.site.register(Map, MapAdmin)

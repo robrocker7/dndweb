@@ -112,7 +112,7 @@
       <div class="card mt-4">
         <div class="card-body">
           <div id="layer_sidebar">
-            {% include "worlds/_partials/nav_toolbar.html" %}
+            {% include "maps/_partials/nav_toolbar.html" %}
             <ol class="list-group list-group-numbered" id="layer_list_group">
               <li class="list-group-item d-flex justify-content-between align-items-start pe-0" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer">
                 <div class="ms-2 me-auto">
@@ -131,7 +131,7 @@
     <div class="col-8">
       <div class="card mt-4">
         <div class="card-body">
-          {% include "worlds/_partials/toolbar.html" %}
+          {% include "maps/_partials/toolbar.html" %}
           <canvas id="world-canvas" height="600px"></canvas>
           <div class="row">
             <div class="col p-2">
@@ -148,22 +148,22 @@
       <div class="card mt-4">
         <div class="card-body">
           <div id="detail_sidebar">
-            {% include "worlds/_components/cp_layer_details.html" with form=component_forms.layer_details %}
+            {% include "maps/_components/cp_layer_details.html" with form=component_forms.layer_details %}
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-{% include "worlds/_partials/bottom_toolbar.html" %}
+{% include "maps/_partials/bottom_toolbar.html" %}
 {% endblock %}
 
 {% block extra_javascript %}
 <script type="text/javascript" src="{% static "tinybind/tinybind.min.js" %}"></script>
 <script type="text/javascript" src="{% static "vendors/fabric/fabric.min.js" %}"></script>
-<script type="text/javascript" src="{% static "worlds/js/world_canvas.js" %}"></script>
-<script type="text/javascript" src="{% static "worlds/js/layer_toolbar.js" %}"></script>
-<script type="text/javascript" src="{% static "worlds/js/detail_toolbar.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/world_canvas.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/layer_toolbar.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/detail_toolbar.js" %}"></script>
 <script type="text/javascript">
 (function() {
   function handle_main_file_drop(event) {

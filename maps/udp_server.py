@@ -4,7 +4,7 @@ import json
 import time
 import numpy as np
 
-from worlds.worlds import World
+from maps.worlds import World
 
 w = World(10, 10, world_uuid='test')
 w.build_coords()

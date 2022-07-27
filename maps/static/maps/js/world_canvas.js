@@ -373,7 +373,7 @@ class WorldCanvas {
         'world_layers': self.generate_world_layer_payload().reverse()
       }
       console.log(payload)
-      fetch("/api/worlds/"+self.object_uuid+"/",
+      fetch("/api/maps/"+self.object_uuid+"/",
         {
             method: "PATCH",
             body: JSON.stringify(payload),
@@ -391,7 +391,7 @@ class WorldCanvas {
       var payload = {
         'world_layers': self.generate_empty_world_layer_payload().reverse()
       }
-      fetch("/api/worlds/"+self.object_uuid+"/",
+      fetch("/api/maps/"+self.object_uuid+"/",
         {
             method: "PATCH",
             body: JSON.stringify(payload),

@@ -3,16 +3,16 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
 from django.views.generic.detail import DetailView
 
-from worlds.models import World
-from worlds.forms import NewWorldForm, LayerDetailsComponentForm
+from maps.models import Map
+from maps.forms import NewMapForm, LayerDetailsComponentForm
 
 
-class NewWorldView(FormView):
-    template_name = "worlds/new_world.html"
-    form_class = NewWorldForm
+class NewMapView(FormView):
+    template_name = "maps/new_world.html"
+    form_class = NewMapForm
 
     def get_success_url(self):
-        return '/worlds/{0}/'.format(self.object.uuid)
+        return '/maps/{0}/'.format(self.object.uuid)
 
     def form_valid(self, form):
         """If the form is valid, save the associated model."""
@@ -22,9 +22,9 @@ class NewWorldView(FormView):
         return super().form_valid(form)
 
 
-class WorldHomeView(DetailView):
-    template_name = "worlds/world_home.html"
-    model = World
+class MapHomeView(DetailView):
+    template_name = "maps/world_home.html"
+    model = Map
     slug_field = 'uuid'
 
     component_forms = {

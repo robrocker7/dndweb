@@ -7,6 +7,9 @@ from django.views.generic.detail import DetailView
 from campaigns.models import Campaign
 from campaigns.forms import NewCampaignForm
 
+from maps.forms import NewMapForm
+
+
 class CampaignLandingPageView(ListView):
     template_name = "campaigns/home.html"
     model = Campaign
@@ -41,4 +44,6 @@ class CampaignHomeView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context['maps'] = self.object.map_set.all()
+        context['map_form'] = NewMapForm()
         return context

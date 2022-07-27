@@ -1,11 +1,11 @@
 from rest_framework import routers
 from django.urls import path
-from worlds import api as world_views
+from maps import api as map_views
 
 app_name = 'api'
 
 
 router = routers.SimpleRouter()
-router.register(r'worlds', world_views.WorldViewSet)
+router.register(r'maps', map_views.MapViewSet)
 
 urlpatterns = router.urls

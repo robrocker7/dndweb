@@ -5,7 +5,7 @@ import itertools
 import operator
 import numpy as np
 
-from worlds.constants import WORLD_MASKS, TERRAIN_MASK
+from maps.constants import WORLD_MASKS, TERRAIN_MASK
 
 
 class World:

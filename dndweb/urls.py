@@ -21,7 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(('api.urls', 'api'), namespace='api')),
     path('campaigns/', include(('campaigns.urls', 'campaigns'), namespace='campaigns')),
-    path('worlds/', include(('worlds.urls', 'worlds'), namespace='worlds')),
+    path('maps/', include(('maps.urls', 'maps'), namespace='maps')),
 ]
 
 if settings.DEBUG:
