@@ -200,13 +200,6 @@ class WorldLayer {
     }
   }
 
-  can_delete() {
-    if(this.is_tile_layer) {
-      return false;
-    }
-    return true;
-  }
-
 }
 
 class WorldCanvas {

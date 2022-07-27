@@ -1,6 +1,13 @@
 {% load django_bootstrap5 %}
-<div class="card mt-4" rv-show="is_detail_component">
+<div class="card" rv-show="is_detail_component">
+  <div class="card-header">Layer Details {model.order}</div>
   <div class="card-body">
     {% bootstrap_form form %}
+    
+  </div>
+  <div rv-show="model.is_tile_layer" class="card-footer text-center">
+    <small>
+      This layer can not be drag and dropped nor can it contain assets.
+    </small>
   </div>
 </div>

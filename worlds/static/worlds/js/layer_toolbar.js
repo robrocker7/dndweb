@@ -71,11 +71,17 @@ var layerModels = {
     this.items.splice(0, 0, layer);
     //this.items.push(layer);
     this.map[layer.uuid] = layer;
+    ni = 1;
+    for (var i = this.items.length - 1; i >= 0; i--) {
+      this.items[i].order = ni;
+      ni += 1;
+    }
   },
   remove_layer(event, model) {
+    delete model.$parent.map[model.item.uuid];
     model.$parent.items.splice(model.$index, 1);
     // update order
-    for(var i = 0; i < model.$parent.items; i++) {
+    for(var i = 0; i < model.$parent.items.length; i++) {
       model.$parent.items[i].order = i;
     }
   },

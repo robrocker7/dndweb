@@ -16,36 +16,93 @@
     min-height: 700px;
     overflow-y: auto;
   }
+  #detail_sidebar {
+    max-height: 700px;
+    min-height: 700px;
+    overflow-y: auto;
+  }
   .list-group-item.over {
     border: 3px dotted #666;
+  }
+  #world_container {
+    position: relative;
+  }
+  #drop_file_container {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 9999999; 
+  }
+  #drop_file_information {
+    position:  fixed;
+    left: 50%;
+    top:  50%;
+    width:  500px;
+    height:  600px;
+    margin-left:  -250px;
+    margin-top:  -300px;
+    z-index: 9999999;
   }
 </style>
 {% endblock %}
 
 {% block main_content %}
-<div class="container-fluid">
+<div class="container-fluid" id="world_container">
+  <div id="drop_file_container" class="border border-5 bg-light rounded border-dark" style="--bs-bg-opacity: .9;" rv-show="is_dragging">
+    <div class="position-absolute top-0 end-0"><button class="btn btn-link" rv-on-click="close"><i class="bi bi-x"></i></button></div>
+    <div id="drop_file_information" class="bg-dark rounded text-white text-center">
+      <div rv-show="is_valid_state">
+        <p class="display-1" style="font-size: 10rem;"><i class="bi bi-download"></i></p>
+        <div class="bg-secondary p-2 m-4 display-5 rounded-pill">
+          Upload Asset to {layer_name}
+        </div>
+        <div class="card text-bg-dark position-absolute bottom-0" style="width: 100%;">
+          <div class="card-body p-0">
+            <div class="badge text-bg-light">
+              <i class="bi bi-filetype-jpg" style="font-size: 3rem;"></i><br/>
+            </div>
+            <div class="badge text-bg-light">
+              <i class="bi bi-filetype-png" style="font-size: 3rem;"></i><br/>
+            </div>
+          </div>
+          <div class="card-footer">
+            Supported File Types
+          </div>
+        </div>
+      </div>
+      <div rv-show="is_valid_state | not">
+        <div class="bg-secondary p-2 m-4 display-5 rounded-pill">
+          Please choose a layer before attemping to upload a file.
+        </div>
+      </div>
+    </div>
+  </div>
   <h1>{{ object.name }}</h1>
   <small>Cols: {{ object.world_x_cols }} Rows: {{ object.world_y_rows }}</small>
   <div class="row">
+
     <div class="col-2">
       <div class="card mt-4">
         <div class="card-body">
           <div id="layer_sidebar">
             {% include "worlds/_partials/nav_toolbar.html" %}
             <ol class="list-group list-group-numbered" id="layer_list_group">
-              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-disabled="item | is_last_item" rv-class-bg-light="item | is_last_item" >
+              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer" rv-class-text-dark="item.is_tile_layer && item.active">
                 <div class="ms-2 me-auto">
                   <div class="fw-bold" rv-on-blur="edit_name" rv-on-click="select_text" contenteditable="true" >{item.name}</div>
                 </div>
                 <span class="badge bg-primary rounded-pill">{item.obj_count}</span>
                 <div rv-if="item.is_tile_layer" style="padding: 0 .70rem;"></div>
-                <a href="#" class="btn btn-link text-danger" rv-on-click="remove_layer" rv-if="item.can_delete" style="--bs-btn-padding-y: 0rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"><i class="bi bi-x"></i></a>
+                <a href="#" class="btn btn-link text-danger" rv-on-click="remove_layer" rv-if="item.is_tile_layer | not" style="--bs-btn-padding-y: 0rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"><i class="bi bi-x"></i></a>
               </li>
             </ol>
           </div>
         </div>
       </div>
     </div>
+
     <div class="col-8">
       <div class="card mt-4">
         <div class="card-body">
@@ -63,8 +120,12 @@
     </div>
 
     <div class="col-2">
-      <div id="detail_sidebar">
-        {% include "worlds/_components/cp_layer_details.html" with form=component_forms.layer_details %}
+      <div class="card mt-4">
+        <div class="card-body">
+          <div id="detail_sidebar">
+            {% include "worlds/_components/cp_layer_details.html" with form=component_forms.layer_details %}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -79,17 +140,60 @@
 <script type="text/javascript" src="{% static "worlds/js/detail_toolbar.js" %}"></script>
 <script type="text/javascript">
 (function() {
+  function handle_main_file_drop(event) {
+    console.log(event);
+  }
   tinybind.configure({
     handler: function(target, event, binding) {
       this.call(target, event, binding.view.models)
     }
   });
-  tinybind.formatters.is_last_item = function(layer){
-    if(layer.order == 1) {
-      return true;
+
+  document.getElementById('world_container').addEventListener('drop', function(e) {
+    e.preventDefault();
+    fileUploadModel.is_dragging = false;
+    if (e.dataTransfer.items) {
+      // Use DataTransferItemList interface to access the file(s)
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        // If dropped items aren't files, reject them
+        if (e.dataTransfer.items[i].kind === 'file') {
+          const file = e.dataTransfer.items[i].getAsFile();
+          console.log(`… file[${i}].name = ${file.name}`);
+        }
+      }
+    } else {
+      // Use DataTransfer interface to access the file(s)
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        console.log(`… file[${i}].name = ${e.dataTransfer.files[i].name}`);
+      }
     }
-    return false;
+  });
+  document.getElementById('world_container').addEventListener('dragenter', function(e) {
+    fileUploadModel.is_dragging = true;
+    if(componentDetailModels.active_component == 'layer_details') {
+      fileUploadModel.is_valid_state = true;
+      fileUploadModel.layer_name = componentDetailModels.model.name;
+      fileUploadModel.layer_uuid = componentDetailModels.model.uuid;
+    } else {
+      fileUploadModel.is_valid_state = false;
+    }
+  });
+  document.getElementById('world_container').addEventListener('dragover', function(e) {
+    e.preventDefault();
+  });
+
+  var fileUploadModel = {
+    is_dragging: false,
+    is_valid_state: false,
+    layer_name: '',
+    layer_uuid: '',
+
+    close(event, model) {
+      model.is_dragging=false;
+    }
   }
+
+  window.fileuploaderBinding = tinybind.bind(document.getElementById('drop_file_container'), fileUploadModel);
   
   window.layerBinding = tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
   window.detailBinding = tinybind.bind(document.getElementById("detail_sidebar"), componentDetailModels);
