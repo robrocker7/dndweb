@@ -25,3 +25,15 @@ class WORLD_MASKS(ClassConst):
         INTERACTABLE_MASK: 'Interactable',
         CREATURE_MASK: 'Creature'
     }
+
+
+class LAYER_VISIBILITY_COMPONENT(ClassConst):
+    EVERYONE = 0
+    DM_ONLY = 1
+    SET_PLAYERS = 3
+
+    DISPLAY = {
+        EVERYONE: 'Everyone',
+        DM_ONLY: 'DM Only',
+        SET_PLAYERS: 'Set Players'
+    }

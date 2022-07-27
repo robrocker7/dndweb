@@ -1,6 +1,7 @@
 {% extends "worlds/base.html" %}
 
 {% load static %}
+{% load django_bootstrap5 %}
 
 {% block extra_head %}
 <style type="text/css">
@@ -11,7 +12,9 @@
     padding: 0px;
   }
   #layer_sidebar {
-    height: 100%;
+    max-height: 700px;
+    min-height: 700px;
+    overflow-y: auto;
   }
   .list-group-item.over {
     border: 3px dotted #666;
@@ -20,17 +23,17 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="container">
+<div class="container-fluid">
   <h1>{{ object.name }}</h1>
   <small>Cols: {{ object.world_x_cols }} Rows: {{ object.world_y_rows }}</small>
   <div class="row">
-    <div class="col-3">
+    <div class="col-2">
       <div class="card mt-4">
         <div class="card-body">
           <div id="layer_sidebar">
             {% include "worlds/_partials/nav_toolbar.html" %}
             <ol class="list-group list-group-numbered" id="layer_list_group">
-              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" >
+              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-disabled="item | is_last_item" rv-class-bg-light="item | is_last_item" >
                 <div class="ms-2 me-auto">
                   <div class="fw-bold" rv-on-blur="edit_name" rv-on-click="select_text" contenteditable="true" >{item.name}</div>
                 </div>
@@ -43,20 +46,26 @@
         </div>
       </div>
     </div>
-    <div class="col">
+    <div class="col-8">
       <div class="card mt-4">
         <div class="card-body">
           {% include "worlds/_partials/toolbar.html" %}
           <canvas id="world-canvas" height="600px"></canvas>
+          <div class="row">
+            <div class="col p-2">
+              <button id="saveMapButton" class="btn btn-primary float-end">Save Map</button>
+              <button id="resetMapButton" class="btn btn-danger float-end">Reset Map</button>
+              <button id="debug" class="btn btn-danger float-end">Debug</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col p-2">
-      <button id="saveMapButton" class="btn btn-primary float-end">Save Map</button>
-      <button id="resetMapButton" class="btn btn-danger float-end">Reset Map</button>
-      <button id="debug" class="btn btn-danger float-end">Debug</button>
+
+    <div class="col-2">
+      <div id="detail_sidebar">
+        {% include "worlds/_components/cp_layer_details.html" with form=component_forms.layer_details %}
+      </div>
     </div>
   </div>
 </div>
@@ -66,6 +75,8 @@
 <script type="text/javascript" src="{% static "tinybind/tinybind.min.js" %}"></script>
 <script type="text/javascript" src="{% static "vendors/fabric/fabric.min.js" %}"></script>
 <script type="text/javascript" src="{% static "worlds/js/world_canvas.js" %}"></script>
+<script type="text/javascript" src="{% static "worlds/js/layer_toolbar.js" %}"></script>
+<script type="text/javascript" src="{% static "worlds/js/detail_toolbar.js" %}"></script>
 <script type="text/javascript">
 (function() {
   tinybind.configure({
@@ -73,96 +84,18 @@
       this.call(target, event, binding.view.models)
     }
   });
-  var dragSrcIndex = null;
-  var layerModels = {
-    items: [],
-    map: {},
-    drag_start(event, model) {
-      this.style.opacity = '0.4';
-      dragSrcIndex = model.$index;
-    },
-    drag_end(event, model) {
-      this.style.opacity = '1';
-
-      var children = document.getElementById('layer_list_group').children;
-      for(var i=0; i<children.length; i++){
-          var child = children[i];
-          child.classList.remove('over');
-      }
-    },
-    drag_enter(event, model) {
-      event.preventDefault();
-      this.classList.add('over');
-    },
-    drag_leave(event, model) {
-      event.preventDefault();
-      this.classList.remove('over');
-    },
-    drag_over(event, model) {
-      event.preventDefault();
-      this.classList.remove('over');
-    },
-    drag_drop(event, model) {
-      // event.stopPropagation();
-      let finalSrcIndex = dragSrcIndex;
-      let finalDestIndex = model.$index;
-      if (dragSrcIndex !== model.$index) {
-          if(model.$index == 0) {
-            finalSrcIndex = dragSrcIndex;
-            finalDestIndex = 0;
-          }
-        _dragged_item = model.$parent.items.splice(finalSrcIndex, 1);
-        model.$parent.items.splice(finalDestIndex, 0, _dragged_item[0]);
-        
-      }
-
-      // update order
-      for(var i = 0; i < model.$parent.items; i++) {
-        model.$parent.items[i].order = i;
-      }
-
-      return false;
-    },
-    edit_name(event, model) {
-      model.item.set_name(this.textContent);
-    },
-    select_text(event, modal) {
-      select_contenteditable_text(this);
-    },
-    push(layer) {
-      //this.items[layer.uuid] = layer;
-      this.items.splice(0, 0, layer);
-      //this.items.push(layer);
-      this.map[layer.uuid] = layer;
-    },
-    remove_layer(event, model) {
-      model.$parent.items.splice(model.$index, 1);
-      // update order
-      for(var i = 0; i < model.$parent.items; i++) {
-        model.$parent.items[i].order = i;
-      }
-    },
-    reset() {
-      this.items = {};
-    },
-    get_length() {
-      return Object.keys(this.map).length;
-    },
-    get_by_index(i) {
-      console.log(i);
-      return this.items[i];
-    },
-    sort() {
-      this.items.sort(function (a, b) {
-        return (a.value || 0) - (b.value || 0)
-      })
-    },
-    is_not_tile_layer(event, model) {
-      console.log(this);
+  tinybind.formatters.is_last_item = function(layer){
+    if(layer.order == 1) {
+      return true;
     }
+    return false;
   }
-  tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
-
+  
+  window.layerBinding = tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
+  window.detailBinding = tinybind.bind(document.getElementById("detail_sidebar"), componentDetailModels);
+  console.log(window.detailBinding);
+  
+  //customElements.define('component-forms', LayerDetails);
   window.world_canvas = new WorldCanvas(
     'world-canvas',
     {{ object.world_x_cols }},

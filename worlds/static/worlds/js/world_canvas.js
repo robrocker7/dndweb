@@ -161,6 +161,7 @@ class WorldLayer {
   constructor(name, order) {
     this.uuid = uuidv4();
     this.name = name;
+    this.visibility = 0;
     this.order = order;
     this.canvas_obj = new fabric.Group([], {
       selectable: false,
@@ -170,6 +171,8 @@ class WorldLayer {
     this.obj_array = [];  // used to store which items are in the layer
     this.obj_mask_array = [];  // used for quick serialization
     this.is_tile_layer = false; // used for layer identification in layer submenu 
+    this.detail_component = 'layer_details'; // used for the detail component
+    this.active = false; // used for ui to display if the layer is active
   }
 
   add_object(obj) {

@@ -4,7 +4,7 @@ from django.views.generic.edit import FormView
 from django.views.generic.detail import DetailView
 
 from worlds.models import World
-from worlds.forms import NewWorldForm
+from worlds.forms import NewWorldForm, LayerDetailsComponentForm
 
 
 class NewWorldView(FormView):
@@ -27,6 +27,11 @@ class WorldHomeView(DetailView):
     model = World
     slug_field = 'uuid'
 
+    component_forms = {
+        'layer_details': LayerDetailsComponentForm
+    }
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context['component_forms'] = self.component_forms
         return context

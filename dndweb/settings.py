@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_bootstrap5',
     'dndweb',
     'users',
     'worlds'
@@ -136,3 +137,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
+
+# BOOTSTRAP5 = {
+#     'field_renderers': {
+#         'default': 'worlds.forms.WorldCanvasFieldRenderer',
+#     }
+# }
