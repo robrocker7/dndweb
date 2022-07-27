@@ -2,11 +2,13 @@ var dragSrcIndex = null;
 var layerModels = {
   items: [],
   map: {},
+  is_dragging: false,
   drag_start(event, model) {
     if(model.$index == model.$parent.items.length-1) {
       event.preventDefault();
       return false;
     }
+    model.$parent.is_dragging = true;
     this.style.opacity = '0.4';
     dragSrcIndex = model.$index;
   },
@@ -26,6 +28,7 @@ var layerModels = {
         var child = children[i];
         child.classList.remove('over');
     }
+    this.is_dragging = false;
   },
   drag_enter(event, model) {
     event.preventDefault();
@@ -57,6 +60,7 @@ var layerModels = {
     for(var i = 0; i < model.$parent.items.length; i++) {
       model.$parent.items[i].order = i;
     }
+    model.$parent.is_dragging = false;
 
     return false;
   },

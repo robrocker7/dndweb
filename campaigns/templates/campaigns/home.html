@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<div class="container">
+  <h2> My Campaigns </h2>
+  <div class="row">
+  {% for campaign in object_list %}
+    <div class="col-2">
+      <div class="card">
+        <div class="card-header">
+          {{ campaign.name }}
+        </div>
+        {% if campaign.banner %}
+        <img src="/media/{{ campaign.banner }}" width="100%" />
+        {% endif %}
+        <div class="card-body">
+          Next Game: 08-28-85 04:30PM CST
+        </div>
+        <div class="card-footer">
+          <a href="{% url 'campaigns:campaign_home' campaign.uuid %}" class="btn btn-primary">Launch</a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}

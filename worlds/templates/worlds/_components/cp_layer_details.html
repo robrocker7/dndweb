@@ -1,6 +1,9 @@
 {% load django_bootstrap5 %}
 <div class="card" rv-show="is_detail_component">
-  <div class="card-header">Layer Details {model.order}</div>
+  <div class="card-header">
+    <span class="badge bg-primary rounded-pill float-end">{model.order}</span>
+    Layer Details 
+  </div>
   <div class="card-body">
     {% bootstrap_form form %}
     

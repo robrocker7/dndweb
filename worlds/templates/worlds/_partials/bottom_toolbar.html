@@ -1,0 +1,54 @@
+<nav class="navbar fixed-bottom text-light bg-dark" id="bottom_toolbar_container">
+  <div class="container-fluid" >
+    <button class="btn btn-secondary bottom_toolbar_button border border-dark border-2 rounded-top rounded-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom">Content Browser</button>
+  </div>
+
+
+  <div class="offcanvas offcanvas-bottom text-bg-dark" tabindex="-1" id="offcanvasBottom" aria-labelledby="offcanvasBottomLabel">
+    <div class="offcanvas-header">
+      <button class="btn btn-secondary bottom_toolbar_button border border-dark border-2 rounded-top rounded-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom">Content Browser</button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body mt-0 pt-0" id="cb_main_container">
+      <div class="row">
+        <div class="col-2">
+          <div class="list-group">
+            <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
+              Campaign Assets
+            </a>
+            <a href="#" class="list-group-item list-group-item-action disabled">My Account Assets</a>
+            <a href="#" class="list-group-item list-group-item-action disabled">DdD5e API Assets</a>
+          </div>
+        </div>
+        <div class="col-10">
+          <div class="card text-bg-secondary" id="cb_file_container">
+            <div class="card-body">
+              <nav class="px-2 rounded text-bg-light" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb" id="cb_directory_crumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item">
+                    <a href="#">/</a>
+                  </li>
+                  <li class="breadcrumb-item" rv-each-crumb="bread_crumbs">
+                    <a href="#">{crumb}</a>
+                  </li>
+                </ol>
+              </nav>
+              <div class="row">
+
+                <div class="col-1">
+                  <div class="card text-dark">
+                    <svg class="bd-placeholder-img card-img-top" width="100px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Image cap" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="50%" y="50%" fill="#dee2e6" dy=".3em">Image cap</text></svg>
+                    <div class="card-body">
+                      <p class="card-text">a</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

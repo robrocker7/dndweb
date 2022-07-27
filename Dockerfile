@@ -22,8 +22,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install psycopg2-binary
 
-RUN chown -R ${APP_USER}:${APP_USER} /usr/src/app
-USER ${APP_USER}:${APP_USER}
+# RUN chown -R ${APP_USER}:${APP_USER} /usr/src/app
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH="${PYTHONPATH}:/usr/lib/python3/dist-packages/"
@@ -33,3 +32,6 @@ EXPOSE 3000-3100:3000-3100
 EXPOSE 3000-3100:3000-3100/udp
 
 COPY . .
+
+# RUN chown -R ${APP_USER}:${APP_USER} /usr/src/app
+# USER ${APP_USER}:${APP_USER}

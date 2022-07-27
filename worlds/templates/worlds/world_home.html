@@ -1,4 +1,4 @@
-{% extends "worlds/base.html" %}
+{% extends "base.html" %}
 
 {% load static %}
 {% load django_bootstrap5 %}
@@ -45,6 +45,31 @@
     margin-top:  -300px;
     z-index: 9999999;
   }
+  #bottom_toolbar_container {
+    height:  8px;
+  }
+  #bottom_toolbar_container .offcanvas-header {
+    position: relative;
+    bottom: 0px;
+    left: 0;
+    padding: 0 16px;
+    margin: 0;
+    height: 20px;
+  }
+  #offcanvasBottom {
+    height:  400px;
+  }
+  #offcanvasBottom .row:first-child {
+    height:  100%;
+  }
+  #cb_file_container {
+    height:  100%;
+  }
+  .bottom_toolbar_button {
+    position: relative;
+    bottom: 28px;
+    left: 0;
+  }
 </style>
 {% endblock %}
 
@@ -89,7 +114,7 @@
           <div id="layer_sidebar">
             {% include "worlds/_partials/nav_toolbar.html" %}
             <ol class="list-group list-group-numbered" id="layer_list_group">
-              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" data-layer-uuid="{item.uuid}" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer" rv-class-text-dark="item.is_tile_layer && item.active">
+              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer">
                 <div class="ms-2 me-auto">
                   <div class="fw-bold" rv-on-blur="edit_name" rv-on-click="select_text" contenteditable="true" >{item.name}</div>
                 </div>
@@ -130,6 +155,7 @@
     </div>
   </div>
 </div>
+{% include "worlds/_partials/bottom_toolbar.html" %}
 {% endblock %}
 
 {% block extra_javascript %}
@@ -152,23 +178,28 @@
   document.getElementById('world_container').addEventListener('drop', function(e) {
     e.preventDefault();
     fileUploadModel.is_dragging = false;
+    var file = null;
     if (e.dataTransfer.items) {
       // Use DataTransferItemList interface to access the file(s)
       for (let i = 0; i < e.dataTransfer.items.length; i++) {
         // If dropped items aren't files, reject them
         if (e.dataTransfer.items[i].kind === 'file') {
-          const file = e.dataTransfer.items[i].getAsFile();
-          console.log(`… file[${i}].name = ${file.name}`);
+          file = e.dataTransfer.items[i].getAsFile();
         }
       }
     } else {
       // Use DataTransfer interface to access the file(s)
       for (let i = 0; i < e.dataTransfer.files.length; i++) {
-        console.log(`… file[${i}].name = ${e.dataTransfer.files[i].name}`);
+        file = e.dataTransfer.files[i];
       }
     }
+    //console.log(file.name);
   });
   document.getElementById('world_container').addEventListener('dragenter', function(e) {
+    if(layerModels.is_dragging) {
+      e.preventDefault();
+      return false;
+    }
     fileUploadModel.is_dragging = true;
     if(componentDetailModels.active_component == 'layer_details') {
       fileUploadModel.is_valid_state = true;
@@ -193,8 +224,14 @@
     }
   }
 
+  var contentBrowserModel = {
+    bread_crumbs: [],
+    visible_assets: []
+
+  }
+
+  //window.contentBrowserBinding = tinybind.bind(document.getElementById('cb_main_container'), contentBrowserModel);
   window.fileuploaderBinding = tinybind.bind(document.getElementById('drop_file_container'), fileUploadModel);
-  
   window.layerBinding = tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
   window.detailBinding = tinybind.bind(document.getElementById("detail_sidebar"), componentDetailModels);
   console.log(window.detailBinding);
