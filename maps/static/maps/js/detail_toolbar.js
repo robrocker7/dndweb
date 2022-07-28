@@ -9,6 +9,11 @@ var componentDetailModels = {
         this.model = object;
         this.flag_detail_component();
     },
+    clear() {
+        this.active_component = 'none';
+        this.model = null;
+        this.flag_detail_component();
+    },
     flag_detail_component() {
         
         if(this.active_component == 'layer_details') {

@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 
+{% load static %}
 {% load django_bootstrap5 %}
+
+{% block additional_nav_links %}
+  <li class="nav-item">
+    <a class="nav-link" aria-current="page" href="/campaigns/">Campaigns</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" aria-current="page" href="/campaigns/{{ object.uuid }}/">{{ object.name }}</a>
+  </li>
+{% endblock %}
 
 {% block main_content %}
 <div class="container">
@@ -16,7 +26,7 @@
       </ul>
       <ul class="list-group">
       	{% for player in object.players.all %}
-      	<li class="list-group-item">{{ player.username }}</li>
+      	<li class="list-group-item" >{{ player.username }}</li>
       	{% endfor %}
       </ul>
     </div>
@@ -24,18 +34,14 @@
   <button class="btn btn-primary float-end" id="newMapButton" data-bs-toggle="modal" data-bs-target="#newMapModal">New Map</button>
   <h3 class="mt-2">My Maps</h3>
   <div class="row">
-  	<div class="col">
+  	<div class="col" >
 
-  		<ul class="list-group">
-        {% for map in maps %}
-        <li class="list-group-item">
-          {{ map.name }} - {{ map.world_x_cols }} x {{ map.world_y_rows }}
-        </li>
-        {% empty %}
-        <li class="list-group-item">
-          No Maps
-        </li>
-        {% endfor %}
+  		<ul class="list-group" id="map_container">
+        <li class="list-group-item" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="on_click">
+          {item.name}
+
+
+        </li>  
       </ul>
   	</div>
   </div>
@@ -64,8 +70,86 @@
 {% endblock %}
 
 {% block extra_javascript %}
+<script type="text/javascript" src="{% static "tinybind/tinybind.min.js" %}"></script>
 <script>
 (function() {
+  var dragSrcIndex = null;
+  var mapModel = {
+    items: {{ maps|safe }},
+    maps: {},
+    drag_start(event, model) {
+      model.$parent.is_dragging = true;
+      this.style.opacity = '0.4';
+      dragSrcIndex = model.$index;
+    },
+    drag_end(event, model) {
+      this.style.opacity = '1';
+
+      var children = document.getElementById('map_container').children;
+      for(var i=0; i<children.length; i++){
+          var child = children[i];
+          child.classList.remove('over');
+      }
+      this.is_dragging = false;
+    },
+    drag_enter(event, model) {
+      event.preventDefault();
+      this.classList.add('over');
+    },
+    drag_leave(event, model) {
+      event.preventDefault();
+      this.classList.remove('over');
+    },
+    drag_over(event, model) {
+      event.preventDefault();
+      this.classList.remove('over');
+    },
+    drag_drop(event, model) {
+      // event.stopPropagation();
+      let finalSrcIndex = dragSrcIndex;
+      let finalDestIndex = model.$index;
+      if (dragSrcIndex !== model.$index) {
+          if(model.$index == 0) {
+            finalSrcIndex = dragSrcIndex;
+            finalDestIndex = 0;
+          }
+        _dragged_item = model.$parent.items.splice(finalSrcIndex, 1);
+        model.$parent.items.splice(finalDestIndex, 0, _dragged_item[0]);
+        
+      }
+
+      // update order
+      for(var i = 0; i < model.$parent.items.length; i++) {
+        model.$parent.items[i].order = i;
+      }
+      model.$parent.is_dragging = false;
+      model.$parent.update_order()
+      return false;
+    },
+    on_click(event, model) {
+      window.location.assign('/maps/'+model.item.uuid+'/');
+    },
+    update_order() {
+      var payload = {
+        'order': {}
+      }
+      for(var i = 0; i < this.items.length; i++) {
+        payload['order'][this.items[i].uuid] = this.items[i].order;
+      }
+      fetch("/api/campaigns/{{ object.uuid }}/update_order/", {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken'),
+              'Content-Type': 'application/json'
+            }
+        }
+      ).then(function(res){ return res.json(); })
+       .then(function(jsonResponse){});
+    }
+  }
+  window.mapBinding = tinybind.bind(document.getElementById('map_container'), mapModel);
+
   document.getElementById('newMapSaveButton').addEventListener('click', (e) => {
     var form = document.getElementById('newMapForm');
     if (form.checkValidity() == false) {

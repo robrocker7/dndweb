@@ -13,12 +13,17 @@ var layerModels = {
     dragSrcIndex = model.$index;
   },
   set_details(event, model) {
-    for(var i = 0; i < model.$parent.items.length; i++) {
-
-      model.$parent.items[i].active = false;
+    if(model.item.active) {
+      model.item.active = false;
+      componentDetailModels.clear();
+    }   else {
+      for(var i = 0; i < model.$parent.items.length; i++) {
+        model.$parent.items[i].active = false;
+      }
+      model.item.active = true;
+      componentDetailModels.set_active_object(model.item);
     }
-    model.item.active = true;
-    componentDetailModels.set_active_object(model.item);
+    
   },
   drag_end(event, model) {
     this.style.opacity = '1';

@@ -22,7 +22,7 @@ services:
    - POSTGRES_DB=dndweb
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=postgres
-  command: python manage.py runserver 0.0.0.0:8000
+  command: /usr/src/app/run.sh
   depends_on:
     - memcached
     - db

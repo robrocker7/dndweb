@@ -4,7 +4,7 @@ import numpy as np
 from django.core.cache import cache
 from rest_framework import serializers
 
-from maps.models import Map
+from maps.models import WorldMap
 from campaigns.models import Campaign
 
 
@@ -12,24 +12,26 @@ class MapSerializer(serializers.ModelSerializer):
     world_layers = serializers.ListField()
 
     class Meta:
-        model = Map
+        model = WorldMap
         fields = (
             'uuid',
             'name',
             'world_x_cols',
             'world_y_rows',
+            'tile_size',
+            'tile_scale',
             'world_layers'
         )
 
     def save(self, *args, **kwargs):
-        if len(self.validated_data['world_layers']):
+        if 'world_layers' in self.validated_data.keys() and len(self.validated_data['world_layers']):
             tile_masks = self.validated_data['world_layers'][0]['masks']
             print(tile_masks)
             self.validated_data['world_layers'] = bytes(json.dumps(self.validated_data['world_layers']), encoding="utf-8")
         instance = super().save(*args, **kwargs)
         # world_layers first index is always going to be the tile layer
 
-        if len(self.validated_data['world_layers']):
+        if 'world_layers' in self.validated_data.keys() and len(self.validated_data['world_layers']):
             terrain_mask_layer = np.frombuffer(bytes(tile_masks), dtype=np.uint8).reshape(
                 instance.world_x_cols, instance.world_y_rows)
 
@@ -41,10 +43,21 @@ class MapSerializer(serializers.ModelSerializer):
         return instance
 
 
+class MapNoLayersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorldMap
+        fields = (
+            'uuid',
+            'name',
+            'world_x_cols',
+            'world_y_rows',
+        )
+
+
 class CreateMapSerializer(serializers.ModelSerializer):
     campaign = serializers.CharField()
     class Meta:
-        model = Map
+        model = WorldMap
         fields = (
             'name',
             'world_x_cols',

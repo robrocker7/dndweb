@@ -2,7 +2,7 @@ from django import forms
 from django_bootstrap5.renderers import FieldRenderer
 
 
-from maps.models import Map
+from maps.models import WorldMap
 from maps.constants import LAYER_VISIBILITY_COMPONENT
 
 
@@ -15,7 +15,7 @@ from maps.constants import LAYER_VISIBILITY_COMPONENT
 
 class NewMapForm(forms.ModelForm):
     class Meta:
-        model = Map
+        model = WorldMap
         fields = [
             'name',
             'world_x_cols',

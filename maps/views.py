@@ -3,7 +3,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
 from django.views.generic.detail import DetailView
 
-from maps.models import Map
+from maps.models import WorldMap
 from maps.forms import NewMapForm, LayerDetailsComponentForm
 
 
@@ -24,7 +24,7 @@ class NewMapView(FormView):
 
 class MapHomeView(DetailView):
     template_name = "maps/world_home.html"
-    model = Map
+    model = WorldMap
     slug_field = 'uuid'
 
     component_forms = {

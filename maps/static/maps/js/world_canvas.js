@@ -23,10 +23,9 @@ function select_contenteditable_text(node) {
 
 class RenderContext {
   // render context is meant to be a shared class used to render elements
-  constructor(ctx) {
-    this.ctx = ctx;
-    this.tile_width = 16;
-    this.tile_height = 16;
+  constructor(tile_width) {
+    this.tile_width = tile_width;
+    this.tile_height = tile_width;
     this.border_width = 2;
     this.border_color = "#000";
     this.default_color = "#FFF";
@@ -114,7 +113,6 @@ class WorldTile {
   set_canvas_obj(canvas_obj) {
     var self = this;
     this.canvas_obj = canvas_obj;
-
     canvas_obj.on('mousedown', function() {
       if(window.world_canvas.toolbar.current_terrain_mask != null) {
         self.set_terrain_mask(window.world_canvas.toolbar.current_terrain_mask);
@@ -154,6 +152,15 @@ class WorldTile {
   set_terrain_mask(mask) {
     this.mask = mask;
     this.update_canvas_obj({'fill': this.get_terrain_mask_color(mask)});
+  }
+
+  set_tile_size(size) {
+    this.size = size;
+    const scale = this.canvas_obj.getObjectScaling();
+    this.canvas_obj.set('width', parseInt(size) / scale.scaleX).set('height', parseInt(size) / scale.scaleY);
+    // this.update_canvas_obj({'width': size, 'height': size});
+    this.canvas_obj.setCoords();
+
   }
 }
 
@@ -203,14 +210,14 @@ class WorldLayer {
 }
 
 class WorldCanvas {
-  constructor(element_id, x_cols, y_rows, object_uuid, canvas_layers) {
+  constructor(element_id, x_cols, y_rows, object_uuid, tile_size, canvas_layers) {
     var canvas_width = document.getElementById("world-canvas").clientWidth;
     var canvas_height = document.getElementById("world-canvas").clientHeight;
 
     this.x_cols = x_cols;
     this.y_rows = y_rows;
     this.object_uuid = object_uuid;
-    this.world_render_context = new RenderContext();
+    this.world_render_context = new RenderContext(tile_size);
     this.toolbar = new Toolbar();
     this.tiles = [];
     this.canvas = new fabric.Canvas(element_id, {
@@ -252,6 +259,24 @@ class WorldCanvas {
     this.canvas.renderAll();
   }
 
+  update_tile_size(size) {
+    this.world_render_context.tile_width = size;
+    this.world_render_context.tile_height = size;
+
+
+    for(let i = 0; i < this.tile_layer.obj_array.length; i++) {
+      this.tile_layer.obj_array[i].set_tile_size(size);
+
+    }
+    this.tile_layer.canvas_obj.addWithUpdate();
+    this.tile_layer.canvas_obj.setCoords();
+
+    this.center_group(this.tile_layer.canvas_obj);
+    this.canvas.renderAll();
+    
+
+  }
+
   populate_tiles(canvas_layer) {
     var self = this;
     var _canvas_objs = []
@@ -285,7 +310,6 @@ class WorldCanvas {
     var layers = [];
     for(let x = 0; x < this.canvas_layers.get_length(); x++) {
       var layer = this.canvas_layers.get_by_index(x);
-      console.log(layer);
       let payload = layer.get_payload();
       layers.push(payload);
     }
@@ -331,7 +355,6 @@ class WorldCanvas {
     this.is_left_mouse_down = false;
 
     this.canvas.on('mouse:down', function(e) {
-      console.log(e)
       if (e.button === 2) {
         self.toolbar.is_middle_mouse_down = true;
       } else {

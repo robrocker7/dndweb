@@ -33,5 +33,6 @@ EXPOSE 3000-3100:3000-3100/udp
 
 COPY . .
 
+RUN chmod +x ./run.sh
 # RUN chown -R ${APP_USER}:${APP_USER} /usr/src/app
 # USER ${APP_USER}:${APP_USER}

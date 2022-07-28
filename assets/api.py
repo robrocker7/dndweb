@@ -10,14 +10,16 @@ from rest_framework.authentication import SessionAuthentication
 
 # from worlds.models import World
 # from worlds.serializers import WorldSerializer
+from assets.models import Asset
+from assets.serializers import AssetSerializer
 
 
-# class AssetViewSet(RetrieveModelMixin,
-#                    UpdateModelMixin,
-#                    GenericViewSet):
-#     lookup_field = 'uuid'
-#     queryset = World.objects.all()
-#     serializer_class = WorldSerializer
-#     renderer_classes = [JSONRenderer,]
+class AssetViewSet(RetrieveModelMixin,
+                   UpdateModelMixin,
+                   GenericViewSet):
+    lookup_field = 'uuid'
+    queryset = Asset.objects.all()
+    serializer_class = AssetSerializer
+    renderer_classes = [JSONRenderer,]
 
 

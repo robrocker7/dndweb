@@ -3,6 +3,18 @@
 {% load static %}
 {% load django_bootstrap5 %}
 
+{% block additional_nav_links %}
+  <li class="nav-item">
+    <a class="nav-link" aria-current="page" href="/campaigns/">Campaigns</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link " aria-current="page" href="/campaigns/{{ object.campaign.uuid }}/">{{ object.campaign.name }}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" aria-current="page" href="/maps/{{ object.uuid }}/">{{ object.name }}</a>
+  </li>
+{% endblock %}
+
 {% block extra_head %}
 <style type="text/css">
   #world-canvas {
@@ -70,11 +82,15 @@
     bottom: 28px;
     left: 0;
   }
+  #layer_list_group .list-group-item.active {
+    color: var(--bs-list-group-color);
+  }
 </style>
 {% endblock %}
 
 {% block main_content %}
 <div class="container-fluid" id="world_container">
+
   <div id="drop_file_container" class="border border-5 bg-light rounded border-dark" style="--bs-bg-opacity: .9;" rv-show="is_dragging">
     <div class="position-absolute top-0 end-0"><button class="btn btn-link" rv-on-click="close"><i class="bi bi-x"></i></button></div>
     <div id="drop_file_information" class="bg-dark rounded text-white text-center">
@@ -111,7 +127,30 @@
     <div class="col-2">
       <div class="card mt-4">
         <div class="card-body">
-          <div id="layer_sidebar">
+          <div id="map_details">
+            <div class="accordion " id="accordionPanelsStayOpenExample">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingOne">
+                  <button class="accordion-button collapsed p-2 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                    Map Details
+                  </button>
+                </h2>
+                <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                  <div class="accordion-body">
+                    <div class="mb-3">
+                      <label class="form-label">Scale</label>
+                      <input type="number" class="form-control" name="scale" rv-value="tile_scale" rv-on-change="on_change">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Tile Size</label>
+                      <input type="number" class="form-control" name="tile_size" rv-value="tile_size" rv-on-change="on_change">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="layer_sidebar" class="mt-4">
             {% include "maps/_partials/nav_toolbar.html" %}
             <ol class="list-group list-group-numbered" id="layer_list_group">
               <li class="list-group-item d-flex justify-content-between align-items-start pe-0" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer">
@@ -166,14 +205,30 @@
 <script type="text/javascript" src="{% static "maps/js/detail_toolbar.js" %}"></script>
 <script type="text/javascript">
 (function() {
-  function handle_main_file_drop(event) {
-    console.log(event);
-  }
   tinybind.configure({
     handler: function(target, event, binding) {
       this.call(target, event, binding.view.models)
     }
   });
+
+  function handle_drop_file(layer_uuid, file) {
+    let formData = new FormData();
+    formData.append('name', file.name);
+    formData.append('asset_type', file.type);
+    formData.append('cb_path', '');
+    formData.append('layer_uuid', layer_uuid);
+    formData.append('asset', file);
+
+    fetch('/api/maps/{{ object.uuid }}/new_asset/', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      }
+    })
+    .then(() => { /* Done. Inform the user */ })
+    .catch(() => { /* Error. Inform the user */ })
+  }
 
   document.getElementById('world_container').addEventListener('drop', function(e) {
     e.preventDefault();
@@ -193,7 +248,16 @@
         file = e.dataTransfer.files[i];
       }
     }
-    //console.log(file.name);
+    if(file == null) {
+      return false;
+    }
+
+    console.log(file);
+    var layer_uuid = '';
+    if(componentDetailModels.is_detail_component) {
+      var layer_uuid = componentDetailModels.model.uuid;
+    }
+    handle_drop_file(layer_uuid, file);
   });
   document.getElementById('world_container').addEventListener('dragenter', function(e) {
     if(layerModels.is_dragging) {
@@ -220,21 +284,42 @@
     layer_uuid: '',
 
     close(event, model) {
-      model.is_dragging=false;
+      model.is_dragging = false;
     }
   }
 
   var contentBrowserModel = {
     bread_crumbs: [],
     visible_assets: []
+  }
 
+  var mapDetailsModel = {
+    tile_scale: {{ object.tile_scale }},
+    tile_size: {{ object.tile_size }},
+    on_change(event, model) {
+      var size = model.tile_size;
+      fetch('/api/maps/{{ object.uuid }}/', {
+        method: 'PATCH',
+        body: JSON.stringify({'tile_size': size, 'tile_scale': model.tile_scale}),
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        }
+      })
+      .then((res) => { return res.json() }).then((jsonResponse)=>{
+        console.log(jsonResponse);
+        // update the canvas
+        window.world_canvas.update_tile_size(size);
+      })
+      .catch(() => { /* Error. Inform the user */ })
+    }
   }
 
   //window.contentBrowserBinding = tinybind.bind(document.getElementById('cb_main_container'), contentBrowserModel);
+  window.fileuploaderBinding = tinybind.bind(document.getElementById('map_details'), mapDetailsModel);
   window.fileuploaderBinding = tinybind.bind(document.getElementById('drop_file_container'), fileUploadModel);
   window.layerBinding = tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
   window.detailBinding = tinybind.bind(document.getElementById("detail_sidebar"), componentDetailModels);
-  console.log(window.detailBinding);
   
   //customElements.define('component-forms', LayerDetails);
   window.world_canvas = new WorldCanvas(
@@ -242,12 +327,16 @@
     {{ object.world_x_cols }},
     {{ object.world_y_rows }},
     '{{ object.uuid }}',
+    {{ object.tile_size }},
     layerModels);
-  {% if object.world_layers %}
-  window.world_canvas.populate_layers_from_json({{ object.world_layers_list|safe }});
-  window.world_canvas.fill_terrain_mask({{ object.world_layers_list.0.masks }});
+  {% if object.map_layers_list %}
+  window.world_canvas.populate_layers_from_json({{ object.map_layers_list|safe }});
+  window.world_canvas.fill_terrain_mask({{ object.map_layers_list.0.masks }});
+  {% else %}
+  window.world_canvas.fill_terrain_mask(window.world_canvas.generate_empty_terrain_mask_array());
   {% endif %}
 })();
 
 </script>
 {% endblock %}
+

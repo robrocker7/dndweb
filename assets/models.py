@@ -2,18 +2,17 @@ import uuid
 from django.db import models
 
 
-def version_upload_to(instance, filename):
+def asset_upload_to(instance, filename):
     file_type = filename.split('.')[-1]
-    return '{0}/{1}-{2}.{3}'.format('versions', instance.name,
-        timezone.now().isoformat(), file_type)
+    return '{0}/{1}/banner.{2}'.format('campaign', instance.uuid, file_type)
 
 
-class ImageAsset(models.Model):
+class Asset(models.Model):
     uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)  # external ID
     name = models.CharField(max_length=255)
+    path = models.TextField()  # can be longer than 255 if; For organization outside campaigns
     asset = models.FileField(
         blank=True,
         null=True,
-        upload_to=version_upload_to,
-        storage=ScopeStorage()
-    )
+        upload_to=asset_upload_to)
+    asset_type = models.CharField(max_length=255)

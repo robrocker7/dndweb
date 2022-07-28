@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.views.generic.list import ListView
@@ -8,6 +10,7 @@ from campaigns.models import Campaign
 from campaigns.forms import NewCampaignForm
 
 from maps.forms import NewMapForm
+from maps.serializers import MapNoLayersSerializer
 
 
 class CampaignLandingPageView(ListView):
@@ -44,6 +47,6 @@ class CampaignHomeView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['maps'] = self.object.map_set.all()
+        context['maps'] = json.dumps(MapNoLayersSerializer(self.object.map_set.order_by('order'), many=True).data)
         context['map_form'] = NewMapForm()
         return context
