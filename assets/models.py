@@ -16,3 +16,5 @@ class Asset(models.Model):
         null=True,
         upload_to=asset_upload_to)
     asset_type = models.CharField(max_length=255)
+    created_by = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    created_on = models.DateTimeField(auto_now_add=True)

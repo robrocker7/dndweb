@@ -39,7 +39,6 @@ class CampaignCreateView(FormView):
         return super().form_valid(form)
 
 
-
 class CampaignHomeView(DetailView):
     template_name = "campaigns/campaign_home.html"
     model = Campaign
@@ -47,6 +46,6 @@ class CampaignHomeView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['maps'] = json.dumps(MapNoLayersSerializer(self.object.map_set.order_by('order'), many=True).data)
+        context['maps'] = json.dumps(MapNoLayersSerializer(self.object.worldmap_set.order_by('order'), many=True).data)
         context['map_form'] = NewMapForm()
         return context

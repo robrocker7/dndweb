@@ -8,8 +8,8 @@ from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.authentication import SessionAuthentication
 
-from maps.models import WorldMap
-from maps.serializers import MapSerializer, CreateMapSerializer
+from maps.models import WorldMap, WorldMapAssetThrough
+from maps.serializers import MapSerializer, CreateMapSerializer, MapAssetSerializer
 
 from assets.models import Asset
 from assets.serializers import AssetSerializer
@@ -43,10 +43,18 @@ class MapViewSet(CreateModelMixin,
             name=request.data['name'],
             path=request.data['cb_path'],
             asset_type=request.data['asset_type'],
-            asset=client_asset)
+            asset=client_asset,
+            created_by=self.request.user)
         world_map.worldmapassetthrough_set.create(
             asset=asset,
             layer_uuid=request.data['layer_uuid'],
             cb_path=request.data['cb_path'])
         serializer = AssetSerializer(instance=asset)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def assets(self, request, uuid=None):
+        asset_throughs = WorldMapAssetThrough.objects.filter(
+            world_map__uuid=uuid)
+        serializer = MapAssetSerializer(instance=asset_throughs, many=True)
         return Response(serializer.data)

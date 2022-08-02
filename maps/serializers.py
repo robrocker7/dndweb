@@ -2,9 +2,10 @@ import json
 
 import numpy as np
 from django.core.cache import cache
+from django.templatetags.static import static
 from rest_framework import serializers
 
-from maps.models import WorldMap
+from maps.models import WorldMap, WorldMapAssetThrough
 from campaigns.models import Campaign
 
 
@@ -71,3 +72,29 @@ class CreateMapSerializer(serializers.ModelSerializer):
         campaign = Campaign.objects.get(uuid=campaign_uuid)
         self.validated_data['campaign'] = campaign
         return super().save(*args, **kwargs)
+
+
+class MapAssetSerializer(serializers.ModelSerializer):
+    asset_file = serializers.SerializerMethodField()
+    asset_type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WorldMapAssetThrough
+        fields = (
+            'asset_file',
+            'asset_type',
+            'world_map',
+            'layer_uuid',
+            'cb_path'
+        )
+
+    def get_asset_file(self, obj):
+        return obj.asset.asset.url;
+
+    def get_asset_type(self, obj):
+        return obj.asset.asset_type
+
+    @classmethod
+    def prefetch_related_querset(cls, queryset):
+        return queryset.prefetch_related(
+            'asset', 'world_map')

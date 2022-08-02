@@ -152,16 +152,7 @@
           </div>
           <div id="layer_sidebar" class="mt-4">
             {% include "maps/_partials/nav_toolbar.html" %}
-            <ol class="list-group list-group-numbered" id="layer_list_group">
-              <li class="list-group-item d-flex justify-content-between align-items-start pe-0" rv-each-item="items" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer">
-                <div class="ms-2 me-auto">
-                  <div class="fw-bold" rv-on-blur="edit_name" rv-on-click="select_text" contenteditable="true" >{item.name}</div>
-                </div>
-                <span class="badge bg-primary rounded-pill">{item.obj_count}</span>
-                <div rv-if="item.is_tile_layer" style="padding: 0 .70rem;"></div>
-                <a href="#" class="btn btn-link text-danger" rv-on-click="remove_layer" rv-if="item.is_tile_layer | not" style="--bs-btn-padding-y: 0rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"><i class="bi bi-x"></i></a>
-              </li>
-            </ol>
+            {% include "maps/_components/layer_list_item.html" %}
           </div>
         </div>
       </div>
@@ -200,141 +191,69 @@
 {% block extra_javascript %}
 <script type="text/javascript" src="{% static "tinybind/tinybind.min.js" %}"></script>
 <script type="text/javascript" src="{% static "vendors/fabric/fabric.min.js" %}"></script>
+
+<script type="text/javascript" src="{% static "maps/js/components/map_details.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/components/drag_drop_asset.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/content_browser_controller.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/layer_controller.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/detail_controller.js" %}"></script>
+<script type="text/javascript" src="{% static "maps/js/world_controller.js" %}"></script>
+{% comment %}
 <script type="text/javascript" src="{% static "maps/js/world_canvas.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/layer_toolbar.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/detail_toolbar.js" %}"></script>
+{% endcomment %}
 <script type="text/javascript">
 (function() {
+  var assets = {{ assets|safe }};
   tinybind.configure({
     handler: function(target, event, binding) {
       this.call(target, event, binding.view.models)
     }
   });
+  var layerController = new LayerController();
+  var detailController = new DetailController();
+  var contentBrowserController = new ContentBrowserController('{{ object.uuid }}');
+  var mapDetailsComponent = new MapDetailsComponent({{ object.tile_scale }}, {{ object.tile_size }});
+  var dragDropUploaderComponent = new DragDropAssetUploaderComponent('world_container', '{{ object.uuid }}');
 
-  function handle_drop_file(layer_uuid, file) {
-    let formData = new FormData();
-    formData.append('name', file.name);
-    formData.append('asset_type', file.type);
-    formData.append('cb_path', '');
-    formData.append('layer_uuid', layer_uuid);
-    formData.append('asset', file);
 
-    fetch('/api/maps/{{ object.uuid }}/new_asset/', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      }
-    })
-    .then(() => { /* Done. Inform the user */ })
-    .catch(() => { /* Error. Inform the user */ })
-  }
-
-  document.getElementById('world_container').addEventListener('drop', function(e) {
-    e.preventDefault();
-    fileUploadModel.is_dragging = false;
-    var file = null;
-    if (e.dataTransfer.items) {
-      // Use DataTransferItemList interface to access the file(s)
-      for (let i = 0; i < e.dataTransfer.items.length; i++) {
-        // If dropped items aren't files, reject them
-        if (e.dataTransfer.items[i].kind === 'file') {
-          file = e.dataTransfer.items[i].getAsFile();
-        }
-      }
-    } else {
-      // Use DataTransfer interface to access the file(s)
-      for (let i = 0; i < e.dataTransfer.files.length; i++) {
-        file = e.dataTransfer.files[i];
-      }
-    }
-    if(file == null) {
-      return false;
-    }
-
-    console.log(file);
-    var layer_uuid = '';
-    if(componentDetailModels.is_detail_component) {
-      var layer_uuid = componentDetailModels.model.uuid;
-    }
-    handle_drop_file(layer_uuid, file);
-  });
-  document.getElementById('world_container').addEventListener('dragenter', function(e) {
-    if(layerModels.is_dragging) {
-      e.preventDefault();
-      return false;
-    }
-    fileUploadModel.is_dragging = true;
-    if(componentDetailModels.active_component == 'layer_details') {
-      fileUploadModel.is_valid_state = true;
-      fileUploadModel.layer_name = componentDetailModels.model.name;
-      fileUploadModel.layer_uuid = componentDetailModels.model.uuid;
-    } else {
-      fileUploadModel.is_valid_state = false;
-    }
-  });
-  document.getElementById('world_container').addEventListener('dragover', function(e) {
-    e.preventDefault();
-  });
-
-  var fileUploadModel = {
-    is_dragging: false,
-    is_valid_state: false,
-    layer_name: '',
-    layer_uuid: '',
-
-    close(event, model) {
-      model.is_dragging = false;
-    }
-  }
-
-  var contentBrowserModel = {
-    bread_crumbs: [],
-    visible_assets: []
-  }
-
-  var mapDetailsModel = {
-    tile_scale: {{ object.tile_scale }},
-    tile_size: {{ object.tile_size }},
-    on_change(event, model) {
-      var size = model.tile_size;
-      fetch('/api/maps/{{ object.uuid }}/', {
-        method: 'PATCH',
-        body: JSON.stringify({'tile_size': size, 'tile_scale': model.tile_scale}),
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json'
-        }
-      })
-      .then((res) => { return res.json() }).then((jsonResponse)=>{
-        console.log(jsonResponse);
-        // update the canvas
-        window.world_canvas.update_tile_size(size);
-      })
-      .catch(() => { /* Error. Inform the user */ })
-    }
-  }
-
-  //window.contentBrowserBinding = tinybind.bind(document.getElementById('cb_main_container'), contentBrowserModel);
-  window.fileuploaderBinding = tinybind.bind(document.getElementById('map_details'), mapDetailsModel);
-  window.fileuploaderBinding = tinybind.bind(document.getElementById('drop_file_container'), fileUploadModel);
-  window.layerBinding = tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
-  window.detailBinding = tinybind.bind(document.getElementById("detail_sidebar"), componentDetailModels);
-  
-  //customElements.define('component-forms', LayerDetails);
-  window.world_canvas = new WorldCanvas(
+  window.world_controller = new WorldController(
     'world-canvas',
+    '{{ object.uuid }}',
     {{ object.world_x_cols }},
     {{ object.world_y_rows }},
-    '{{ object.uuid }}',
     {{ object.tile_size }},
-    layerModels);
+    layerController,
+    detailController,
+    contentBrowserController,
+    mapDetailsComponent,
+    dragDropUploaderComponent);
+
   {% if object.map_layers_list %}
-  window.world_canvas.populate_layers_from_json({{ object.map_layers_list|safe }});
-  window.world_canvas.fill_terrain_mask({{ object.map_layers_list.0.masks }});
+  window.world_controller.populate_layers_from_json({{ object.map_layers_list|safe }});
+  window.world_controller.fill_terrain_mask({{ object.map_layers_list.0.masks }});
   {% else %}
   window.world_canvas.fill_terrain_mask(window.world_canvas.generate_empty_terrain_mask_array());
   {% endif %}
+
+
+  // window.fileuploaderBinding = tinybind.bind(document.getElementById('drop_file_container'), fileUploadModel);
+  // window.layerBinding = tinybind.bind(document.getElementById("layer_sidebar"), layerModels);
+  // window.detailBinding = tinybind.bind(document.getElementById("detail_sidebar"), componentDetailModels);
+
+  // window.contentBrowser = new ContentBrowserWrapper(contentBrowserModel);
+  
+  //customElements.define('component-forms', LayerDetails);
+  // window.world_canvas = new WorldCanvas(
+  //   'world-canvas',
+  //   {{ object.world_x_cols }},
+  //   {{ object.world_y_rows }},
+  //   '{{ object.uuid }}',
+  //   {{ object.tile_size }},
+  //   layerModels);
+  
+
 })();
 
 </script>

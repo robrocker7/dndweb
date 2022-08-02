@@ -1,0 +1,10 @@
+<ol class="list-group list-group-numbered" id="layer_list_group">
+  <li class="list-group-item d-flex justify-content-between align-items-start pe-0" rv-each-item="layers" rv-on-dragstart="drag_start" rv-on-dragend="drag_end" rv-on-dragenter="drag_enter" rv-on-dragleave="drag_leave" rv-on-drop="drag_drop" rv-on-dragdrop="dragdrop" rv-on-dragover="drag_over" draggable="true" rv-on-click="set_details" rv-class-active="item.active" rv-class-bg-light="item.is_tile_layer">
+    <div class="ms-2 me-auto">
+      <div class="fw-bold" rv-on-blur="edit_name" rv-on-click="select_text" contenteditable="true" >{item.name}</div>
+    </div>
+    <span class="badge bg-primary rounded-pill">{item.obj_count}</span>
+    <div rv-if="item.is_tile_layer" style="padding: 0 .70rem;"></div>
+    <a href="#" class="btn btn-link text-danger" rv-on-click="remove_layer" rv-if="item.is_tile_layer | not" style="--bs-btn-padding-y: 0rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"><i class="bi bi-x"></i></a>
+  </li>
+</ol>
