@@ -8,7 +8,7 @@ class LayerController {
 
   add_layer(layer) {  // expects a WorldLayer object
   
-    this.map[layer.uuid] = this.layers.length;
+    this.map[layer.uuid] = layer;
     this.layers.splice(0, 0, layer);
     this.obj_count += 1;
     let ni = 1;
@@ -20,7 +20,7 @@ class LayerController {
   }
 
   get_by_uuid(uuid) {
-    return this.layers[this.map[uuid]];
+    return this.map[uuid];
   }
 
   get_next_zspace() {
@@ -110,25 +110,48 @@ class LayerController {
       window.world_controller.detail_controller.set_active_object(model.item);
     }
   }
+
+  has_active_layer() {
+    var has_layers = false;
+    for(var i = 0; i < this.layers.length; i++) {
+      if(this.layers[i].active == true) {
+        has_layers = true;
+        break;
+      }
+    }
+    return has_layers;
+  }
+
+  set_active_layer(layer) {
+    for(var i = 0; i < this.layers.length; i++) {
+      this.layers[i].active = false;
+    }
+    layer.active = true;
+  }
 }
 
 
 // purely a way to group assets; the canvas will need to allow objects to be freely added agnostic of layer
 class WorldLayer {
-  constructor(name, order, zspace) {
-    this.uuid = uuidv4();
+  constructor(name, order, zspace, uuid) {
+    this.uuid = uuid;
+    if(this.uuid == undefined) {
+      this.uuid = uuidv4();
+    }
+
     this.name = name;
     this.visibility = 0;
     this.order = order;
     this.zspace = zspace;
 
     this.obj_count = 0;  // used by the UI to show how many items are in the array
-    this.obj_array = [];  // used to store which items are in the layer
+    this.objs = [];  // used to store which items are in the layer
+    this.map = {};
     this.obj_mask_array = [];  // used for quick serialization
     this.is_tile_layer = false; // used for layer identification in layer submenu 
     this.detail_component = 'layer_details'; // used for the detail component
     this.active = false; // used for ui to display if the layer is active
-
+    this.selected_obj = null;
   }
 
   object_change(asset) {
@@ -139,32 +162,65 @@ class WorldLayer {
     // the asset object is a dict; we need to understand what file type and
     // create a new javascript object for each file type
     if(asset.asset_type == 'image/jpeg') {
-      var asset = new ImageAsset(asset.uuid, asset.asset_file, this.uuid);
+      var asset = new ImageAsset(this.uuid, asset);
       asset.start_download();
     }
   }
 
   add_object(obj) {
     this.obj_count += 1;
-    this.obj_array.push(obj);
+    this.objs.splice(0, 0, obj);
+    if(obj.uuid != undefined) {
+      this.map[obj.uuid] = obj;
+    }
     this.obj_mask_array.push(obj.mask);
+  }
+
+  remove_object(obj) {
+    this.obj_count -= 1;
+    this.objs.splice(objs.indexOf(obj), 1);
+    delete this.map[obj.uuid];
+    this.obj_mask_array.splice(objs.indexOf(obj), 1);
   }
 
   add_to_canvas(obj) {
     window.world_controller.canvas.add(obj.canvas_obj);
-    
-    window.world_controller.canvas.renderAll();
+    if(obj.asset_meta) {
+      obj.canvas_obj.set(obj.asset_meta);
+    }
+    obj.canvas_obj.setCoords();
     window.world_controller.canvas.moveTo(obj.canvas_obj,
-      this.obj_array.indexOf(obj)+this.zspace);
+      this.objs.indexOf(obj)+this.zspace);
+    window.world_controller.canvas.renderAll();
+  }
+
+  remove_from_canvas(obj) {
+    window.world_controller.canvas.remove(obj.canvas_obj);
   }
 
   set_obj_zindex(obj) {
     // window.world_controller.canvas.moveTo(obj,
-    //   this.obj_array.indexOf(obj)+this.zspace);
+    //   this.objs.indexOf(obj)+this.zspace);
   }
 
   set_name(name) {
     this.name = name;
+  }
+
+  set_active_object_event(event, model) {
+    for(var i = 0; i < model.$parent.model.objs.length; i++) {
+      model.$parent.model.objs[i].active = false;
+    }
+    model.asset.active = true;
+    window.world_controller.canvas.setActiveObject(model.asset.canvas_obj);
+    window.world_controller.canvas.renderAll();
+  }
+
+  set_active_object(asset) {
+    for(var i = 0; i < this.objs.length; i++) {
+      this.objs[i].active = false;
+    }
+    asset.active = true;
   }
 
   get_payload() {
@@ -175,5 +231,4 @@ class WorldLayer {
       'masks': this.obj_mask_array
     }
   }
-
 }

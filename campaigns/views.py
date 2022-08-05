@@ -5,6 +5,7 @@ from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import FormView
 from django.views.generic.detail import DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from campaigns.models import Campaign
 from campaigns.forms import NewCampaignForm
@@ -13,7 +14,7 @@ from maps.forms import NewMapForm
 from maps.serializers import MapNoLayersSerializer
 
 
-class CampaignLandingPageView(ListView):
+class CampaignLandingPageView(LoginRequiredMixin, ListView):
     template_name = "campaigns/home.html"
     model = Campaign
 
@@ -21,7 +22,7 @@ class CampaignLandingPageView(ListView):
         return super().get_context_data(*args, **kwargs)
 
 
-class CampaignCreateView(FormView):
+class CampaignCreateView(LoginRequiredMixin, FormView):
     template_name = "campaigns/edit.html"
     form_class = NewCampaignForm
     success_url = ''
@@ -39,7 +40,7 @@ class CampaignCreateView(FormView):
         return super().form_valid(form)
 
 
-class CampaignHomeView(DetailView):
+class CampaignHomeView(LoginRequiredMixin, DetailView):
     template_name = "campaigns/campaign_home.html"
     model = Campaign
     slug_field = 'uuid'

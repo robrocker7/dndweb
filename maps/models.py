@@ -12,6 +12,7 @@ class WorldMapAssetThrough(models.Model):
         'maps.WorldMap', on_delete=models.CASCADE)
     
     layer_uuid = models.CharField(max_length=255)  # uuid of layer the asset belongs to
+    asset_meta = models.JSONField(null=True, blank=True)
     cb_path = models.TextField()  # we'll use this to store directory display information
     created_on = models.DateTimeField(auto_now_add=True)
 

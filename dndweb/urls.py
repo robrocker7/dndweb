@@ -17,11 +17,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
+
+from dndweb import views
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('api/', include(('api.urls', 'api'), namespace='api')),
     path('campaigns/', include(('campaigns.urls', 'campaigns'), namespace='campaigns')),
     path('maps/', include(('maps.urls', 'maps'), namespace='maps')),
+    path('', views.LandingRedirectView.as_view(), name='landing_page'),
 ]
 
 if settings.DEBUG:

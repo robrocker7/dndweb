@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'dndweb',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,9 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_bootstrap5',
+
     'assets',
     'campaigns',
-    'dndweb',
     'users',
     'maps',
 ]
@@ -142,7 +143,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
-
+LOGIN_REDIRECT_URL = '/campaigns/'
+LOGOUT_REDIRECT_URL = '/accounts/login/?logout=true'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # BOOTSTRAP5 = {
 #     'field_renderers': {
 #         'default': 'worlds.forms.WorldCanvasFieldRenderer',

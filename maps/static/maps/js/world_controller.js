@@ -138,42 +138,6 @@ class Toolbar {
   }
 }
 
-class ImageAsset {
-  constructor(uuid, media_url, layer_uuid) {
-    this.uuid = uuid;
-    this.canvas_obj = null;
-    this.layer_uuid = layer_uuid;
-    this.media_url = media_url;
-    this.mask = 0; // indicates imageasset    
-  }
-
-  start_download() {
-    var self = this;
-    fabric.Image.fromURL(this.media_url, function(oImg) {
-      self.canvas_obj = oImg;
-      self.canvas_obj.set({'top': 200, 'left': 200});
-      self.setup_events();
-      let layer = window.world_controller.layer_controller.get_by_uuid(self.layer_uuid);
-      layer.add_object(self);
-      layer.add_to_canvas(self);
-    });
-  }
-
-  setup_events() {
-    var self = this;
-    this.isObjectMoving = false;
-    this.canvas_obj.on('event:moved', function (event) {
-      console.log('moving')
-       this.isObjectMoving = true;
-    });
-
-    this.canvas_obj.on('mouseup', function (event) {
-      // lets tell the layer that I have done something
-      //layerModels.map[self.layer_uuid].object_change(self)
-    });
-  }
-}
-
 class WorldController {
   constructor(canvas_id, world_uuid, x, y, tile_size, layer_controller, detail_controller, content_browser_controller, map_details_component, drag_and_drop_component) {;
     this.canvas_id = canvas_id;
@@ -192,7 +156,7 @@ class WorldController {
     this.drag_and_drop_component = drag_and_drop_component;
     this.drag_and_drop_binding = tinybind.bind(document.getElementById('drop_file_container'), drag_and_drop_component);
 
-
+    
     var canvas_width = document.getElementById(this.canvas_id).clientWidth;
     var canvas_height = document.getElementById(this.canvas_id).clientHeight;
 
@@ -211,14 +175,30 @@ class WorldController {
     this.canvas.setHeight(canvas_height);
     this.canvas.setWidth(canvas_width);
     this.canvas.selectionFullyContained = true;
+
     this.tile_group = null;
     this.tile_layer = new WorldLayer('Tiles', 1, this.layer_controller.get_next_zspace());
     this.tile_layer.is_tile_layer = true;
+
     this.populate_tiles(this.tile_layer);
     // tell the layer controller we created a layer
     this.layer_controller.add_layer(this.tile_layer);
-    
+    this.savedCanvasPos = localStorage.getItem('_canvasPos');
+    if(this.savedCanvasPos == null) {
+      this.savedCanvasPos = localStorage.setItem('_canvasPos', JSON.stringify({'t': [], 'z': 0}));
+    } else {
+      this.savedCanvasPos = JSON.parse(this.savedCanvasPos);
+      this.canvas.setZoom(this.savedCanvasPos.z);
+      this.canvas.viewportTransform = this.savedCanvasPos.t;
+    }
     this.setup_events();
+  }
+
+  update_canvas_pos_cache() {
+    console.log(window.world_controller.canvas)
+    console.log(window.world_controller.canvas.getZoom());
+    localStorage.setItem('_canvasPos',
+      JSON.stringify({'t': window.world_controller.canvas.viewportTransform, 'z': window.world_controller.canvas.getZoom()}));
   }
 
   center_group(canvas_layer) {
@@ -226,8 +206,8 @@ class WorldController {
   }
 
   fill_terrain_mask(cached_mask) {
-    for(let i = 0; i < this.tile_layer.obj_array.length; i++) {
-      this.tile_layer.obj_array[i].set_terrain_mask(cached_mask[i]);
+    for(let i = 0; i < this.tile_layer.objs.length; i++) {
+      this.tile_layer.objs[i].set_terrain_mask(cached_mask[i]);
       this.tile_layer.obj_mask_array[i] = cached_mask[i];
     }
     this.canvas.renderAll();
@@ -237,8 +217,8 @@ class WorldController {
     this.world_render_context.tile_width = size;
     this.world_render_context.tile_height = size;
 
-    for(let i = 0; i < this.tile_layer.obj_array.length; i++) {
-      this.tile_layer.obj_array[i].set_tile_size(size);
+    for(let i = 0; i < this.tile_layer.objs.length; i++) {
+      this.tile_layer.objs[i].set_tile_size(size);
     }
     this.tile_group.addWithUpdate();
     this.tile_group.setCoords();
@@ -246,6 +226,25 @@ class WorldController {
     this.canvas.renderAll();
     
 
+  }
+
+  update_asset_meta(uuid, layer_uuid, asset_json) {
+    var self = this;
+    var payload = {
+      'layer_uuid': layer_uuid,
+      'asset_meta': asset_json
+    }
+    fetch("/api/maps/"+self.world_uuid+"/asset/"+uuid+"/",
+      {
+          method: "PUT",
+          body: JSON.stringify(payload),
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          }
+      }
+    ).then(function(res){ return res.json(); })
+     .then(function(jsonResponse){console.log(jsonResponse);});
   }
 
   populate_tiles(canvas_layer) {
@@ -262,8 +261,8 @@ class WorldController {
     }
     // the tile layer will get a group
     let _canvas_objs = []
-    for(let i = 0; i < canvas_layer.obj_array.length; i++) {
-      _canvas_objs.push(canvas_layer.obj_array[i].canvas_obj);
+    for(let i = 0; i < canvas_layer.objs.length; i++) {
+      _canvas_objs.push(canvas_layer.objs[i].canvas_obj);
     }
     this.tile_group = new fabric.Group(_canvas_objs, {
       selectable: false,
@@ -277,8 +276,8 @@ class WorldController {
 
   generate_terrain_mask_array() {
     var terrain_mask_array = [];
-    for(let i = 0; i < this.tile_layer.obj_array.length; i++) {
-      terrain_mask_array.push(this.tile_layer.obj_array[i].mask);
+    for(let i = 0; i < this.tile_layer.objs.length; i++) {
+      terrain_mask_array.push(this.tile_layer.objs[i].mask);
     }
     return terrain_mask_array;
   }
@@ -309,7 +308,7 @@ class WorldController {
 
   generate_empty_terrain_mask_array() {
     var terrain_mask_array = [];
-    for(let i = 0; i < this.tile_layer.obj_array.length; i++) {
+    for(let i = 0; i < this.tile_layer.objs.length; i++) {
       terrain_mask_array.push(0);
     }
     return terrain_mask_array;
@@ -321,8 +320,7 @@ class WorldController {
     for(let i = 1; i < json_array.length; i++) {
       let layer_attrs = json_array[i];
       let zspace_assignment = this.layer_controller.get_next_zspace()
-      var layer = new WorldLayer(layer_attrs.name, layer_attrs.order, zspace_assignment);
-      layer.uuid = layer_attrs['uuid'];
+      var layer = new WorldLayer(layer_attrs.name, layer_attrs.order, zspace_assignment, layer_attrs['uuid']);
       layer.masks = layer_attrs.masks;
       this.layer_controller.add_layer(layer);
     }
@@ -342,6 +340,7 @@ class WorldController {
       }
       
     });
+
     this.canvas.on('mouse:up', function(e) {
       if (e.button === 2) {
         self.toolbar.is_middle_mouse_down = false;
@@ -357,6 +356,8 @@ class WorldController {
       if (zoom > 20) zoom = 20;
       if (zoom < 0.01) zoom = 0.01;
       self.canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+
+      self.update_canvas_pos_cache();
       opt.e.preventDefault();
       opt.e.stopPropagation();
     });
@@ -366,7 +367,29 @@ class WorldController {
             var units = 10;
             var delta = new fabric.Point(e.e.movementX, e.e.movementY);
             self.canvas.relativePan(delta);
+            self.update_canvas_pos_cache();
         }
+    });
+
+    this.canvas.on('selection:cleared', function(e) {
+      let layer = window.world_controller.layer_controller.get_by_uuid(e.deselected[0].layer_uuid);
+      layer.map[e.deselected[0].asset_uuid].active = false;
+    });
+
+    this.canvas.on('selection:created', function(e) {
+      let layer = window.world_controller.layer_controller.get_by_uuid(e.selected[0].layer_uuid);
+      layer.set_active_object(layer.map[e.selected[0].asset_uuid]);
+      window.world_controller.layer_controller.set_active_layer(layer);
+      window.world_controller.detail_controller.set_active_object(layer);
+    });
+
+    this.canvas.on('selection:updated', function(e) {
+      let layer = window.world_controller.layer_controller.get_by_uuid(e.selected[0].layer_uuid);
+      if(!window.world_controller.layer_controller.has_active_layer()) {
+        window.world_controller.layer_controller.set_active_layer(layer);
+      }
+      layer.set_active_object(layer.map[e.selected[0].asset_uuid]);
+      window.world_controller.detail_controller.set_active_object(layer);
     });
 
 
@@ -376,7 +399,7 @@ class WorldController {
         'world_layers': self.generate_world_layer_payload().reverse()
       }
       console.log(payload)
-      fetch("/api/maps/"+self.object_uuid+"/",
+      fetch("/api/maps/"+self.world_uuid+"/",
         {
             method: "PATCH",
             body: JSON.stringify(payload),
@@ -394,7 +417,7 @@ class WorldController {
       var payload = {
         'world_layers': self.generate_empty_world_layer_payload().reverse()
       }
-      fetch("/api/maps/"+self.object_uuid+"/",
+      fetch("/api/maps/"+self.world_uuid+"/",
         {
             method: "PATCH",
             body: JSON.stringify(payload),

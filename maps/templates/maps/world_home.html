@@ -85,6 +85,7 @@
   #layer_list_group .list-group-item.active {
     color: var(--bs-list-group-color);
   }
+
 </style>
 {% endblock %}
 
@@ -192,17 +193,14 @@
 <script type="text/javascript" src="{% static "tinybind/tinybind.min.js" %}"></script>
 <script type="text/javascript" src="{% static "vendors/fabric/fabric.min.js" %}"></script>
 
+<script type="text/javascript" src="{% static "maps/js/components/assets.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/components/map_details.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/components/drag_drop_asset.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/content_browser_controller.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/layer_controller.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/detail_controller.js" %}"></script>
 <script type="text/javascript" src="{% static "maps/js/world_controller.js" %}"></script>
-{% comment %}
-<script type="text/javascript" src="{% static "maps/js/world_canvas.js" %}"></script>
-<script type="text/javascript" src="{% static "maps/js/layer_toolbar.js" %}"></script>
-<script type="text/javascript" src="{% static "maps/js/detail_toolbar.js" %}"></script>
-{% endcomment %}
+
 <script type="text/javascript">
 (function() {
   var assets = {{ assets|safe }};

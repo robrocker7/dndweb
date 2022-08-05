@@ -45,11 +45,11 @@ class MapViewSet(CreateModelMixin,
             asset_type=request.data['asset_type'],
             asset=client_asset,
             created_by=self.request.user)
-        world_map.worldmapassetthrough_set.create(
+        instance = world_map.worldmapassetthrough_set.create(
             asset=asset,
             layer_uuid=request.data['layer_uuid'],
             cb_path=request.data['cb_path'])
-        serializer = AssetSerializer(instance=asset)
+        serializer = MapAssetSerializer(instance=instance)
         return Response(serializer.data)
 
     @action(detail=True, methods=['GET'])
@@ -58,3 +58,11 @@ class MapViewSet(CreateModelMixin,
             world_map__uuid=uuid)
         serializer = MapAssetSerializer(instance=asset_throughs, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['PUT'],
+        url_path='asset/(?P<asset_uuid>[^/.]+)')
+    def update_asset(self, request, uuid=None, asset_uuid=None):
+        print(request.data)
+        print(WorldMapAssetThrough.objects.filter(world_map__uuid=uuid, asset__uuid=asset_uuid).update(
+            asset_meta=request.data['asset_meta'], layer_uuid=request.data['layer_uuid']))
+        return Response({'success': True})

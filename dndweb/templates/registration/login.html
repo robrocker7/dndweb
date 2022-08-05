@@ -1,0 +1,36 @@
+{% extends "registration/base.html" %}
+
+{% load django_bootstrap5 %}
+
+{% block registration_alert %}
+{% if request.GET.logout %}
+	<div class="alert alert-info" role="alert">
+	You have been successfully logged out.
+	</div>
+{% endif %}
+{% endblock %}
+
+{% block registration_title %}Please sign in{% endblock %}
+
+{% block registration_content %}
+  <form method="POST" action="">
+  	{% csrf_token %}
+
+    <div class="form-floating">
+      {% bootstrap_field form.username %}
+    </div>
+    <div class="form-floating">
+      {% bootstrap_field form.password %}
+    </div>
+
+    <div class="checkbox mb-3">
+      <label>
+        <input type="checkbox" value="remember-me"> Remember me
+      </label>
+    </div>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+
+    <p><a href="{% url 'password_reset' %}" class="btn btn-link">Lost password?</a></p>
+    <p class="mt-5 mb-3 text-muted">&copy; 2022</p>
+  </form>
+{% endblock %}

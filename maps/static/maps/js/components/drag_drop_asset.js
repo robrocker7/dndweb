@@ -25,7 +25,12 @@ class DragDropAssetUploaderComponent {
         'X-CSRFToken': getCookie('csrftoken'),
       }
     })
-    .then(() => { /* Done. Inform the user */ })
+    .then((res) => {
+      return res.json();
+    }).then((jsonResponse) => {
+      console.log(jsonResponse);
+      window.world_controller.content_browser_controller.populate_browser([jsonResponse]);
+    })
     .catch(() => { /* Error. Inform the user */ })
   }
 

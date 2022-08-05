@@ -57,6 +57,6 @@ class ContentBrowserController {
     //   layerModels.map[uuid].canvas_obj.addWithUpdate();
     //   layerModels.map[uuid].canvas_obj.setCoords();
     // });
-    // window.world_canvas.canvas.renderAll();
+    window.world_controller.canvas.renderAll();
   }
 }

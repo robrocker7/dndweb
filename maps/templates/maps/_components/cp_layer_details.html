@@ -6,8 +6,14 @@
   </div>
   <div class="card-body">
     {% bootstrap_form form %}
-    
   </div>
+  <div class="accordion accordion-flush pe-2" rv-show="model.is_tile_layer | not" id="layerDetailAssets" style="--bs-accordion-btn-icon-width: 0.5em;">
+    <div class="accordion-item" rv-each-asset="model.objs" rv-on-click="model.set_active_object_event" rv-class-active="asset.active">
+      <layer_asset_header rv-html="asset.accordian_header_html"></layer_asset_header>
+      <layer_asset_body rv-html="asset.accordian_body_html"></layer_asset_body>
+    </div>
+  </div>
+  
   <div rv-show="model.is_tile_layer" class="card-footer text-center">
     <small>
       This layer can not be drag and dropped nor can it contain assets.

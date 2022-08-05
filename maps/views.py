@@ -4,13 +4,14 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
 from django.views.generic.detail import DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from maps.models import WorldMap
 from maps.forms import NewMapForm, LayerDetailsComponentForm
 from maps.serializers import MapAssetSerializer
 
 
-class NewMapView(FormView):
+class NewMapView(LoginRequiredMixin, FormView):
     template_name = "maps/new_world.html"
     form_class = NewMapForm
 
@@ -25,7 +26,7 @@ class NewMapView(FormView):
         return super().form_valid(form)
 
 
-class MapHomeView(DetailView):
+class MapHomeView(LoginRequiredMixin, DetailView):
     template_name = "maps/world_home.html"
     model = WorldMap
     slug_field = 'uuid'

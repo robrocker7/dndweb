@@ -26,6 +26,7 @@ services:
   depends_on:
     - memcached
     - db
+    # - dndapi
   networks:
     - app-tier
  db:
@@ -47,3 +48,29 @@ services:
     - 11211:11211
   networks:
       - app-tier
+
+ # dnddb:
+ #  image: ghcr.io/5e-bits/5e-database:latest
+ #  ports:
+ #    - "27017:27017"
+ #  networks:
+ #      - app-tier
+ # dndcache:
+ #  image: redis:6.2.5
+ #  ports:
+ #    - "6379:6379"
+ #  networks:
+ #    - app-tier
+ # dndapi:
+ #   environment:
+ #     MONGODB_URI: mongodb://dnddb/5e-database
+ #     REDIS_URL: redis://dndcache:6379
+ #     PORT: 8001
+ #   build: ../5e-srd-api/
+ #   ports:
+ #     - '8001:8001'
+ #   depends_on:
+ #     - dnddb
+ #     - dndcache
+ #   networks:
+ #      - app-tier

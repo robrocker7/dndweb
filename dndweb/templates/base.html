@@ -9,6 +9,8 @@
     <link href="{% static "bootstrap/bootstrap.min.css" %}" rel="stylesheet" >
     <link rel="stylesheet" href="{% static "bootstrap/bootstrap-icons.css" %}">
     <meta name="theme-color" content="#712cf9">
+
+    {% block base_head %}
     <style>
       .bd-placeholder-img {
         font-size: 1.125rem;
@@ -64,10 +66,11 @@
         min-height: 75rem;
       }
     </style>
+    {% endblock %}
     {% block extra_head %}{% endblock %}
   </head>
-  <body>
-      
+  <body id="main_body">
+    {% block main_nav %}
     <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">DnD Me</a>
@@ -84,9 +87,11 @@
           </ul>
           <form class="d-flex" role="search">
           </form>
+          <a href="/accounts/logout/">Logout</a>
         </div>
       </div>
     </nav>
+    {% endblock %}
     {% block main_content %}{% endblock %}
 
     <script src="{% static "bootstrap/bootstrap.bundle.min.js" %}"></script>

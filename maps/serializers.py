@@ -75,21 +75,32 @@ class CreateMapSerializer(serializers.ModelSerializer):
 
 
 class MapAssetSerializer(serializers.ModelSerializer):
+    uuid = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
     asset_file = serializers.SerializerMethodField()
     asset_type = serializers.SerializerMethodField()
 
     class Meta:
         model = WorldMapAssetThrough
         fields = (
+            'uuid',
+            'name',
             'asset_file',
             'asset_type',
+            'asset_meta',
             'world_map',
             'layer_uuid',
             'cb_path'
         )
 
+    def get_uuid(self, obj):
+        return str(obj.asset.uuid)
+
+    def get_name(self, obj):
+        return obj.asset.name
+
     def get_asset_file(self, obj):
-        return obj.asset.asset.url;
+        return obj.asset.asset.url
 
     def get_asset_type(self, obj):
         return obj.asset.asset_type
@@ -98,3 +109,5 @@ class MapAssetSerializer(serializers.ModelSerializer):
     def prefetch_related_querset(cls, queryset):
         return queryset.prefetch_related(
             'asset', 'world_map')
+
+
