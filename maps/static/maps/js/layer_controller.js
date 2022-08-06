@@ -127,8 +127,6 @@ class LayerController {
       this.layers[i].active = false;
     }
     layer.active = true;
-    window.world_controller.detail_controller.set_active_object(layer);
-    console.log(window.world_controller.detail_binding);
   }
 
 }
@@ -154,10 +152,6 @@ class WorldLayer {
     this.detail_component = 'layer_details'; // used for the detail component
     this.active = false; // used for ui to display if the layer is active
     this.selected_obj = null;
-  }
-
-  object_change(asset) {
-    console.log(asset);
   }
 
   add_asset(asset) { 
@@ -206,12 +200,24 @@ class WorldLayer {
   }
 
   set_active_object_event(event, model) {
-    for(var i = 0; i < model.$parent.model.objs.length; i++) {
-      model.$parent.model.objs[i].active = false;
+    if(model.asset.active) {
+      let asset_event = new CustomEvent('asset:deactivate', {
+        'detail': {
+          'asset_uuid': model.asset.uuid,
+          'layer_uuid': model.asset.layer_uuid
+        }
+      });
+      window.world_controller.canvas_elem.dispatchEvent(asset_event);
+
+    } else {
+      let asset_event = new CustomEvent('asset:active', {
+        'detail': {
+          'asset_uuid': model.asset.uuid,
+          'layer_uuid': model.asset.layer_uuid
+        }
+      });
+      window.world_controller.canvas_elem.dispatchEvent(asset_event);
     }
-    model.asset.active = true;
-    window.world_controller.canvas.setActiveObject(model.asset.canvas_obj);
-    window.world_controller.canvas.renderAll();
   }
 
   set_active_object(asset) {
@@ -219,13 +225,6 @@ class WorldLayer {
       this.objs[i].active = false;
     }
     asset.active = true;
-    // check if layer details is visible
-    if(!window.world_controller.detail_controller.is_detail_component) {
-      // click the appropiate layer
-      let layer = window.world_controller.layer_controller.get_by_uuid(asset.layer_uuid);
-      window.world_controller.layer_controller.set_active_layer(layer);
-    }
-
     new bootstrap.Collapse(document.getElementById('bu'+asset.uuid).parentElement.parentElement.children[1], {
       toggle: true
     });

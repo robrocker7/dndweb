@@ -108,11 +108,15 @@ class ImageAsset {
   } 
 
   on_change(event, model) {
+    // we lock x/y
+    model.asset.asset_meta.scaleY = model.asset.asset_meta.scaleX
     model.asset.canvas_obj.set({
       'opacity': model.asset.asset_meta.opacity,
       'angle': model.asset.asset_meta.angle,
       'flipX': model.asset.asset_meta.flipX,
-      'flipY': model.asset.asset_meta.flipY
+      'flipY': model.asset.asset_meta.flipY,
+      'scaleX': model.asset.asset_meta.scaleX,
+      'scaleY': model.asset.asset_meta.scaleY
     });
     model.asset.update_asset();
     window.world_controller.canvas.renderAll();

@@ -159,9 +159,9 @@ class WorldController {
     this.drag_and_drop_component = drag_and_drop_component;
     this.drag_and_drop_binding = tinybind.bind(document.getElementById('drop_file_container'), drag_and_drop_component);
 
-    
-    var canvas_width = document.getElementById(this.canvas_id).clientWidth;
-    var canvas_height = document.getElementById(this.canvas_id).clientHeight;
+    this.canvas_elem = document.getElementById(this.canvas_id);
+    var canvas_width = this.canvas_elem.clientWidth;
+    var canvas_height = this.canvas_elem.clientHeight;
 
     this.world_uuid = world_uuid;
     this.world_render_context = new RenderContext(tile_size);
@@ -357,6 +357,48 @@ class WorldController {
     this.check_for_tiles = false;
     this.is_left_mouse_down = false;
 
+    this.canvas_elem.addEventListener('asset:active', function (e) {
+      console.log(e);
+      if(e.detail.layer_uuid != undefined) {
+        let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
+        let asset = layer.map[e.detail.asset_uuid];
+        // set world sidebar active state
+        window.world_controller.layer_controller.set_active_layer(layer);
+
+        // if the layer is not selected; then select it
+        if(window.world_controller.detail_controller.model != layer) {
+          window.world_controller.detail_controller.set_active_object(layer);
+        }
+
+        // only do this if the layer is selected
+        if(window.world_controller.detail_controller.is_detail_component) {
+          // set detail sidebar active
+          layer.set_active_object(asset);
+        }
+
+        // set the content browser active flag
+        window.world_controller.content_browser_controller.set_active_asset(asset.uuid);
+
+        // set the active object on the canvas and render it
+        self.canvas.setActiveObject(asset.canvas_obj);
+        self.canvas.renderAll();
+        
+      }
+    }, false);
+
+    this.canvas_elem.addEventListener('asset:deactivate', function (e) {
+      console.log(e);
+      if(e.detail.layer_uuid != undefined) {
+        let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
+        layer.map[e.detail.asset_uuid].active = false;
+        window.world_controller.canvas.discardActiveObject().renderAll();
+        new bootstrap.Collapse(
+          document.getElementById('bu'+e.detail.asset_uuid).parentElement.parentElement.children[1], {
+          toggle: false
+        });
+      }
+    }, false);
+
     this.canvas.on('mouse:down', function(e) {
       if (e.button === 2) {
         self.toolbar.is_middle_mouse_down = true;
@@ -398,29 +440,39 @@ class WorldController {
 
     this.canvas.on('selection:cleared', function(e) {
       if(e.deselected != undefined) {
-        let layer = window.world_controller.layer_controller.get_by_uuid(e.deselected[0].layer_uuid);
-        console.log(layer.map[e.deselected[0].asset_uuid]);
-        layer.map[e.deselected[0].asset_uuid].active = false;
-        new bootstrap.Collapse(document.getElementById('bu'+e.deselected[0].asset_uuid).parentElement.parentElement.children[1], {
-        toggle: true
-      });
+        let asset_active_event = new CustomEvent('asset:deactivate', {
+          'detail': {
+            'asset_uuid': e.deselected[0].asset_uuid,
+            'layer_uuid': e.deselected[0].layer_uuid
+          }
+        });
+        self.canvas_elem.dispatchEvent(asset_active_event);
       }
       
     });
 
     this.canvas.on('selection:created', function(e) {
-      let layer = window.world_controller.layer_controller.get_by_uuid(e.selected[0].layer_uuid);
-      layer.set_active_object(layer.map[e.selected[0].asset_uuid]);
-      window.world_controller.layer_controller.set_active_layer(layer);
-      window.world_controller.detail_controller.set_active_object(layer);
+      
+      let asset_active_event = new CustomEvent('asset:active', {
+        'detail': {
+          'asset_uuid': e.selected[0].asset_uuid,
+          'layer_uuid': e.selected[0].layer_uuid
+        }
+      });
+      self.canvas_elem.dispatchEvent(asset_active_event);
     });
 
     this.canvas.on('selection:updated', function(e) {
-      let layer = window.world_controller.layer_controller.get_by_uuid(e.selected[0].layer_uuid);
-      window.world_controller.layer_controller.set_active_layer(layer);
-      layer.set_active_object(layer.map[e.selected[0].asset_uuid]);
-      window.world_controller.detail_controller.set_active_object(layer);
+      let asset_active_event = new CustomEvent('asset:active', {
+        'detail': {
+          'asset_uuid': e.selected[0].asset_uuid,
+          'layer_uuid': e.selected[0].layer_uuid
+        }
+      });
+      self.canvas_elem.dispatchEvent(asset_active_event);
     });
+
+    this.canvas.on('')
 
 
     document.getElementById('saveMapButton').addEventListener('click', (e) => {

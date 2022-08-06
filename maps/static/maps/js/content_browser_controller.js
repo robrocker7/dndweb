@@ -4,6 +4,7 @@ class ContentBrowserController {
     this.bread_crumbs = [];
     this.cb_path_map = {};
     this.asset_uuid_map = {};
+    this.assets = [];
     this.layer_assets = {};
     this.load_assets()
   }
@@ -30,6 +31,7 @@ class ContentBrowserController {
       // populate asset map
       if(!(api_response[i].uuid in this.asset_uuid_map) ) {
         this.asset_uuid_map[api_response[i].uuid] = api_response[i];
+        this.assets.push(api_response[i]);
       }
 
       let cb_name = api_response[i].cb_path;
@@ -60,5 +62,20 @@ class ContentBrowserController {
     //   layerModels.map[uuid].canvas_obj.setCoords();
     // });
     window.world_controller.canvas.renderAll();
+  }
+
+  set_active_asset(asset_uuid) {
+    for(let i = 0; i < this.assets.length; i++) {
+      if(this.assets[i].uuid == asset_uuid) {
+        this.assets[i].active = true;
+      } else {
+        this.assets[i].active = false;
+      }
+     
+    }
+  }
+
+  asset_on_click_action(event, model) {
+    model.$parent.set_active_asset(model.asset.uuid);
   }
 }
