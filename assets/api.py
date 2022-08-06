@@ -16,6 +16,7 @@ from assets.serializers import AssetSerializer
 
 class AssetViewSet(RetrieveModelMixin,
                    UpdateModelMixin,
+                   DestroyModelMixin,
                    GenericViewSet):
     lookup_field = 'uuid'
     queryset = Asset.objects.all()

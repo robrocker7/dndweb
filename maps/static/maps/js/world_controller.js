@@ -18,9 +18,11 @@ class RenderContext {
 
   build_rectangle(tile) {
     return new fabric.Rect({
-      originX: tile.x,
-      originY: tile.y,
+      originX: 'left',
+      originY: 'bottom',
       fill: this.default_color,
+      left: this.get_x_coord(tile.x),
+      top: this.get_y_coord(tile.y),
       width: this.tile_width,
       height: this.tile_height,
       stroke: this.border_color,
@@ -47,7 +49,8 @@ class WorldTile {
     this.canvas_obj = canvas_obj;
     canvas_obj.on('mousedown', function() {
       if(window.world_controller.toolbar.current_terrain_mask != null) {
-        self.layer_placement[0].obj_mask_array[self.layer_placement[1]] = window.world_controller.toolbar.current_terrain_mask;
+        self.set_terrain_mask(window.world_controller.toolbar.current_terrain_mask);
+        self.layer_placement[0].obj_mask_array[(self.layer_placement[0].obj_mask_array.length-1) - self.layer_placement[1]] = window.world_controller.toolbar.current_terrain_mask;
         window.world_controller.canvas.renderAll();
       }
     });
@@ -55,7 +58,7 @@ class WorldTile {
     canvas_obj.on('mouseover', function() {
       if(window.world_controller.toolbar.current_terrain_mask != null && window.world_controller.toolbar.is_left_mouse_down) {
         self.set_terrain_mask(window.world_controller.toolbar.current_terrain_mask);
-        self.layer_placement[0].obj_mask_array[self.layer_placement[1]] = window.world_controller.toolbar.current_terrain_mask;
+        self.layer_placement[0].obj_mask_array[(self.layer_placement[0].obj_mask_array.length-1) - self.layer_placement[1]] = window.world_controller.toolbar.current_terrain_mask;
         window.world_controller.canvas.renderAll();
       }
     });
@@ -190,13 +193,15 @@ class WorldController {
       this.savedCanvasPos = JSON.parse(this.savedCanvasPos);
       this.canvas.setZoom(this.savedCanvasPos.z);
       this.canvas.viewportTransform = this.savedCanvasPos.t;
+      // "touch" the canvas to force a refresh that corrects display selection events 
+      let p = new fabric.Point(0, 0);
+      this.canvas.relativePan(p);
     }
     this.setup_events();
   }
 
   update_canvas_pos_cache() {
-    console.log(window.world_controller.canvas)
-    console.log(window.world_controller.canvas.getZoom());
+    console.log(window.world_controller.canvas);
     localStorage.setItem('_canvasPos',
       JSON.stringify({'t': window.world_controller.canvas.viewportTransform, 'z': window.world_controller.canvas.getZoom()}));
   }
@@ -228,10 +233,11 @@ class WorldController {
 
   }
 
-  update_asset_meta(uuid, layer_uuid, asset_json) {
+  update_asset_meta(uuid, layer_uuid, layer_name, asset_json) {
     var self = this;
     var payload = {
       'layer_uuid': layer_uuid,
+      'name': layer_name,
       'asset_meta': asset_json
     }
     fetch("/api/maps/"+self.world_uuid+"/asset/"+uuid+"/",
@@ -247,14 +253,28 @@ class WorldController {
      .then(function(jsonResponse){console.log(jsonResponse);});
   }
 
+  delete_asset(uuid) {
+    var self = this;
+    fetch("/api/maps/"+self.world_uuid+"/asset/"+uuid+"/",
+      {
+          method: "DELETE",
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+          }
+      }
+    ).then(function(res){ return res.json(); })
+     .then(function(jsonResponse){console.log(jsonResponse);});
+  }
+
   populate_tiles(canvas_layer) {
     var self = this;
-    for (let x = 0; x < this.x; x++) {
-      for (let y = 0; y < this.y; y++) {
-      
+    for (let y = 0; y < this.y; y++) {
+      for (let x = 0; x < this.x; x++) {
+
         var tile = new WorldTile(x, y);
         let canvas_obj = this.world_render_context.build_rectangle(tile);
-        tile.set_layer(canvas_layer, canvas_layer.obj_count);
+        tile.set_layer(canvas_layer, canvas_layer.objs.length);
         tile.set_canvas_obj(canvas_obj);
         canvas_layer.add_object(tile);
       }
@@ -266,10 +286,14 @@ class WorldController {
     }
     this.tile_group = new fabric.Group(_canvas_objs, {
       selectable: false,
-      subTargetCheck: true
+      subTargetCheck: true,
+      dirty: true
     })
+    this.tile_group.addWithUpdate();
+    this.tile_layer.group = this.tile_group;
     this.canvas.add(this.tile_group);
     this.center_group(this.tile_group);
+    
     this.canvas.renderAll();
     
   }
@@ -284,8 +308,8 @@ class WorldController {
 
   generate_world_layer_payload() {
     var layers = [];
-    for(let x = 0; x < this.canvas_layers.get_length(); x++) {
-      var layer = this.canvas_layers.get_by_index(x);
+    for(let x = 0; x < this.layer_controller.layers.length; x++) {
+      var layer = this.layer_controller.layers[x];
       let payload = layer.get_payload();
       layers.push(payload);
     }
@@ -316,10 +340,11 @@ class WorldController {
 
   populate_layers_from_json(json_array) {
     // i starts at 1 because index 0 is tile layer
-
     for(let i = 1; i < json_array.length; i++) {
       let layer_attrs = json_array[i];
+
       let zspace_assignment = this.layer_controller.get_next_zspace()
+
       var layer = new WorldLayer(layer_attrs.name, layer_attrs.order, zspace_assignment, layer_attrs['uuid']);
       layer.masks = layer_attrs.masks;
       this.layer_controller.add_layer(layer);
@@ -372,8 +397,15 @@ class WorldController {
     });
 
     this.canvas.on('selection:cleared', function(e) {
-      let layer = window.world_controller.layer_controller.get_by_uuid(e.deselected[0].layer_uuid);
-      layer.map[e.deselected[0].asset_uuid].active = false;
+      if(e.deselected != undefined) {
+        let layer = window.world_controller.layer_controller.get_by_uuid(e.deselected[0].layer_uuid);
+        console.log(layer.map[e.deselected[0].asset_uuid]);
+        layer.map[e.deselected[0].asset_uuid].active = false;
+        new bootstrap.Collapse(document.getElementById('bu'+e.deselected[0].asset_uuid).parentElement.parentElement.children[1], {
+        toggle: true
+      });
+      }
+      
     });
 
     this.canvas.on('selection:created', function(e) {
@@ -385,9 +417,7 @@ class WorldController {
 
     this.canvas.on('selection:updated', function(e) {
       let layer = window.world_controller.layer_controller.get_by_uuid(e.selected[0].layer_uuid);
-      if(!window.world_controller.layer_controller.has_active_layer()) {
-        window.world_controller.layer_controller.set_active_layer(layer);
-      }
+      window.world_controller.layer_controller.set_active_layer(layer);
       layer.set_active_object(layer.map[e.selected[0].asset_uuid]);
       window.world_controller.detail_controller.set_active_object(layer);
     });

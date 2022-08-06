@@ -8,13 +8,66 @@
     {% bootstrap_form form %}
   </div>
   <div class="accordion accordion-flush pe-2" rv-show="model.is_tile_layer | not" id="layerDetailAssets" style="--bs-accordion-btn-icon-width: 0.5em;">
-    <div class="accordion-item" rv-each-asset="model.objs" rv-on-click="model.set_active_object_event" rv-class-active="asset.active">
-      <layer_asset_header rv-html="asset.accordian_header_html"></layer_asset_header>
-      <layer_asset_body rv-html="asset.accordian_body_html"></layer_asset_body>
+    <div class="accordion-item" rv-each-asset="model.objs"  rv-class-active="asset.active" rv-id="asset.asset_main_id">
+      <div rv-show="is_detail_component">
+        <h2 class="accordion-header" rv-on-click="model.set_active_object_event">
+          <button rv-title="asset.name" 
+                  class="accordion-button collapsed p-0 text-nowrap"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  rv-data-bs-target="asset.asset_accordian_target_id"
+                  rv-id="asset.asset_button_id">
+            <p class="p-2 overflow-hidden me-4" rv-on-blur="asset.name_change">{asset.name}</p>
+          </button>
+        </h2>
+        <div rv-id="asset.asset_accordian_body_id"
+             class="accordion-collapse collapse"
+             data-bs-parent="#layerDetailAssets">
+          <div class="accordion-body">
+            <div class="mb-3">
+              <button class="btn btn-secondary" rv-on-click="asset.set_edit_name">Edit Name</button>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Angle</label>
+              <input type="number" step="0.1" class="form-control" rv-value="asset.asset_meta.angle" rv-on-change="asset.on_change">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Opacity</label>
+              <input type="range" class="form-range" min="0" max="1" step="0.01" rv-value="asset.asset_meta.opacity" rv-on-change="asset.on_change">
+            </div>
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input type="checkbox" rv-checked="asset.asset_meta.flipX" role="switch" class="form-check-input" rv-on-change="asset.on_change">
+                <label class="form-check-label">
+                  Flip X
+                </label>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                <input type="checkbox" rv-checked="asset.asset_meta.flipY" role="switch" class="form-check-input" rv-on-change="asset.on_change">
+                <label class="form-check-label">
+                  Flip Y
+                </label>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button class="btn btn-sm btn-danger mb-2" type="button" rv-on-click="asset.remove">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
   <div rv-show="model.is_tile_layer" class="card-footer text-center">
+    <div class="mb-3">
+      <label class="form-label">Opacity</label>
+      <input type="range" class="form-range" min="0" max="1" step="0.01" rv-value="model.group.opacity" rv-on-change="model.change_group_opacity">
+    </div>
     <small>
       This layer can not be drag and dropped nor can it contain assets.
     </small>

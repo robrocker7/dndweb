@@ -59,10 +59,16 @@ class MapViewSet(CreateModelMixin,
         serializer = MapAssetSerializer(instance=asset_throughs, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['PUT'],
+    @action(detail=True, methods=['PUT', 'DELETE'],
         url_path='asset/(?P<asset_uuid>[^/.]+)')
     def update_asset(self, request, uuid=None, asset_uuid=None):
-        print(request.data)
-        print(WorldMapAssetThrough.objects.filter(world_map__uuid=uuid, asset__uuid=asset_uuid).update(
-            asset_meta=request.data['asset_meta'], layer_uuid=request.data['layer_uuid']))
-        return Response({'success': True})
+        if request.method == 'PUT':
+            Asset.objects.filter(uuid=asset_uuid).update(
+                name=request.data['name'])
+            WorldMapAssetThrough.objects.filter(world_map__uuid=uuid, asset__uuid=asset_uuid).update(
+                asset_meta=request.data['asset_meta'],
+                layer_uuid=request.data['layer_uuid'])
+            return Response({'success': True})
+        if request.method == 'DELETE':
+            Asset.objects.filter(uuid=asset_uuid).delete()
+            return Response({'success': True})

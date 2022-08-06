@@ -1,6 +1,5 @@
 class ImageAsset {
   constructor(layer_uuid, asset) {
-    console.log(asset);
     this.uuid = asset.uuid;
     this.name = asset.name;
     this.canvas_obj = null;
@@ -9,6 +8,11 @@ class ImageAsset {
     this.asset_meta = asset.asset_meta;
     this.mask = 0; // indicates imageasset    
     this.active = false; // used for ui in layer details
+
+    this.asset_main_id = 'asset' + this.uuid;
+    this.asset_accordian_body_id = 'ab' + this.uuid;
+    this.asset_accordian_target_id = '#' + this.asset_accordian_body_id
+    this.asset_button_id = 'bu' + this.uuid;
   }
 
   clean_json(json_dict) {
@@ -66,34 +70,51 @@ class ImageAsset {
     });
   }
 
+  update_asset() {
+    window.world_controller.update_asset_meta(
+        this.uuid,
+        this.layer_uuid,
+        this.name,
+        this.clean_json(this.canvas_obj.toJSON()));
+  }
+
   setup_events() {
     var self = this;
     this.canvas_obj.on('mouseup', function (event) {
-      window.world_controller.update_asset_meta(
-        self.uuid,
-        self.layer_uuid,
-        self.clean_json(self.canvas_obj.toJSON()));
+      console.log(self.canvas_obj.toJSON());
+      self.update_asset();
     });
-
   }
 
-  accordian_header_html() {
-    return `
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed p-0" type="button" data-bs-toggle="collapse" data-bs-target="#ah${this.uuid}" aria-expanded="true" aria-controls="ah${this.uuid}">
-          <p class="p-2">${this.name}</p>
-        </button>
-      </h2>
-    `;
+  name_change(event, model) {
+    model.asset.name = this.textContent;
+    model.asset.update_asset();
   }
 
-  accordian_body_html() {
-    return `
-      <div id="ah${this.uuid}" class="accordion-collapse collapse" aria-labelledby="heading{this.uuid}" data-bs-parent="#layerDetailAssets">
-        <div class="accordion-body">
-          asdfasdf
-        </div>
-      </div>
-    `;
+  set_edit_name(event, model) {
+    this.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0].setAttribute('contenteditable', true);
+    select_contenteditable_text(this.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0]);
+  }
+
+  remove(event, model) {
+    var confirmation = confirm('Are you sure you to remove this asset?');
+    if(confirmation) {
+      let layer = window.world_controller.layer_controller.get_by_uuid(model.asset.layer_uuid);
+      layer.remove_from_canvas(model.asset);
+      layer.remove_object(model.asset);
+
+    }
+    window.world_controller.delete_asset(model.asset.uuid);
+  } 
+
+  on_change(event, model) {
+    model.asset.canvas_obj.set({
+      'opacity': model.asset.asset_meta.opacity,
+      'angle': model.asset.asset_meta.angle,
+      'flipX': model.asset.asset_meta.flipX,
+      'flipY': model.asset.asset_meta.flipY
+    });
+    model.asset.update_asset();
+    window.world_controller.canvas.renderAll();
   }
 }

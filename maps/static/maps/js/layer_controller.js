@@ -127,7 +127,10 @@ class LayerController {
       this.layers[i].active = false;
     }
     layer.active = true;
+    window.world_controller.detail_controller.set_active_object(layer);
+    console.log(window.world_controller.detail_binding);
   }
+
 }
 
 
@@ -138,7 +141,6 @@ class WorldLayer {
     if(this.uuid == undefined) {
       this.uuid = uuidv4();
     }
-
     this.name = name;
     this.visibility = 0;
     this.order = order;
@@ -178,9 +180,9 @@ class WorldLayer {
 
   remove_object(obj) {
     this.obj_count -= 1;
-    this.objs.splice(objs.indexOf(obj), 1);
+    this.objs.splice(this.objs.indexOf(obj), 1);
     delete this.map[obj.uuid];
-    this.obj_mask_array.splice(objs.indexOf(obj), 1);
+    this.obj_mask_array.splice(this.objs.indexOf(obj), 1);
   }
 
   add_to_canvas(obj) {
@@ -196,11 +198,7 @@ class WorldLayer {
 
   remove_from_canvas(obj) {
     window.world_controller.canvas.remove(obj.canvas_obj);
-  }
-
-  set_obj_zindex(obj) {
-    // window.world_controller.canvas.moveTo(obj,
-    //   this.objs.indexOf(obj)+this.zspace);
+    window.world_controller.canvas.discardActiveObject().renderAll();
   }
 
   set_name(name) {
@@ -221,6 +219,23 @@ class WorldLayer {
       this.objs[i].active = false;
     }
     asset.active = true;
+    // check if layer details is visible
+    if(!window.world_controller.detail_controller.is_detail_component) {
+      // click the appropiate layer
+      let layer = window.world_controller.layer_controller.get_by_uuid(asset.layer_uuid);
+      window.world_controller.layer_controller.set_active_layer(layer);
+    }
+
+    new bootstrap.Collapse(document.getElementById('bu'+asset.uuid).parentElement.parentElement.children[1], {
+      toggle: true
+    });
+  }
+
+  change_group_opacity(event, model) {
+    if(model.model.is_tile_layer) {
+      model.model.group.set({'opacity': this.value});
+      window.world_controller.canvas.renderAll();
+    }
   }
 
   get_payload() {

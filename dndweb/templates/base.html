@@ -130,6 +130,9 @@
           (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
         );
       }
+      // function isVisible(e) {
+      //     return !!( e.offsetWidth || e.offsetHeight || e.getClientRects().length );
+      // }
     </script>
     {% block extra_javascript %}{% endblock %}
 </body>

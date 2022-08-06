@@ -27,18 +27,18 @@ class MapSerializer(serializers.ModelSerializer):
     def save(self, *args, **kwargs):
         if 'world_layers' in self.validated_data.keys() and len(self.validated_data['world_layers']):
             tile_masks = self.validated_data['world_layers'][0]['masks']
-            print(tile_masks)
-            self.validated_data['world_layers'] = bytes(json.dumps(self.validated_data['world_layers']), encoding="utf-8")
+            terrain_mask_layer = np.frombuffer(bytes(tile_masks), dtype=np.uint8).reshape(
+                self.instance.world_x_cols, self.instance.world_y_rows)
+            self.validated_data['world_layers'][0]['masks'] = terrain_mask_layer.flatten().tolist()
+            self.validated_data['world_layers'] = bytes(
+                json.dumps(self.validated_data['world_layers']), encoding="utf-8")
         instance = super().save(*args, **kwargs)
         # world_layers first index is always going to be the tile layer
 
         if 'world_layers' in self.validated_data.keys() and len(self.validated_data['world_layers']):
-            terrain_mask_layer = np.frombuffer(bytes(tile_masks), dtype=np.uint8).reshape(
-                instance.world_x_cols, instance.world_y_rows)
-
             response = {
                 'type': 'terrain_update',
-                'payload':np.rot90(terrain_mask_layer, -1).flatten().tolist()
+                'payload': terrain_mask_layer.flatten().tolist()
             }
             cache.set('terrain_update', response)
         return instance

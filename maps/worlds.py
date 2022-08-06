@@ -33,10 +33,13 @@ class World:
         # uses the mgrid structures to build the 2dim matrix of the world
         return np.stack((self.world_xx, self.world_yy), axis=2)
 
+    def transform_for_ue(self, mask_array):
+        print(mask_array)
+        return np.rot90(np.array(mask_array).reshape(self.x_cols, self.y_rows)).flatten().tolist()
+
     def get_packet_world_payload(self):
         # because of UE coord system differences we need to rotate the grid
         _layers = self.layers.copy()
-        _layers[0] = np.rot90(_layers[0], -1)
         return _layers[0].flatten().tolist()
 
     def transform_layer_updates(self, updates):

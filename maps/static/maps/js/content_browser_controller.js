@@ -48,7 +48,9 @@ class ContentBrowserController {
         }
         this.layer_assets[api_response[i].layer_uuid].push(api_response[i].uuid);
         let layer = window.world_controller.layer_controller.get_by_uuid(api_response[i].layer_uuid);
-        layer.add_asset(api_response[i]);
+        if(layer != undefined) {
+          layer.add_asset(api_response[i]);
+        }
       }
     }
     // loop over all the layers that had items added and update them layers
