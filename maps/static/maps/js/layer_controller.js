@@ -225,9 +225,6 @@ class WorldLayer {
       this.objs[i].active = false;
     }
     asset.active = true;
-    new bootstrap.Collapse(document.getElementById('bu'+asset.uuid).parentElement.parentElement.children[1], {
-      toggle: true
-    });
   }
 
   change_group_opacity(event, model) {

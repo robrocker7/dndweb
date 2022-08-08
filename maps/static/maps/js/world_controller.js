@@ -358,7 +358,7 @@ class WorldController {
     this.is_left_mouse_down = false;
 
     this.canvas_elem.addEventListener('asset:active', function (e) {
-      console.log(e);
+      console.log(e)
       if(e.detail.layer_uuid != undefined) {
         let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
         let asset = layer.map[e.detail.asset_uuid];
@@ -374,28 +374,36 @@ class WorldController {
         if(window.world_controller.detail_controller.is_detail_component) {
           // set detail sidebar active
           layer.set_active_object(asset);
+          let instance = bootstrap.Collapse.getOrCreateInstance(
+            document.getElementById('bu'+e.detail.asset_uuid).parentElement.parentElement.children[1]);
+          if(instance) {
+            instance.show();
+          }
         }
 
         // set the content browser active flag
         window.world_controller.content_browser_controller.set_active_asset(asset.uuid);
 
         // set the active object on the canvas and render it
+        let a_object = self.canvas.getActiveObject();
         self.canvas.setActiveObject(asset.canvas_obj);
         self.canvas.renderAll();
+        
         
       }
     }, false);
 
     this.canvas_elem.addEventListener('asset:deactivate', function (e) {
-      console.log(e);
+      console.log(e)
       if(e.detail.layer_uuid != undefined) {
         let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
         layer.map[e.detail.asset_uuid].active = false;
-        window.world_controller.canvas.discardActiveObject().renderAll();
-        new bootstrap.Collapse(
-          document.getElementById('bu'+e.detail.asset_uuid).parentElement.parentElement.children[1], {
-          toggle: false
-        });
+        self.canvas.discardActiveObject().renderAll();
+        let instance = bootstrap.Collapse.getOrCreateInstance(
+          document.getElementById('bu'+e.detail.asset_uuid).parentElement.parentElement.children[1]);
+        if(instance) {
+          instance.hide();
+        }
       }
     }, false);
 
@@ -439,37 +447,46 @@ class WorldController {
     });
 
     this.canvas.on('selection:cleared', function(e) {
+      console.log('cleared')
       if(e.deselected != undefined) {
-        let asset_active_event = new CustomEvent('asset:deactivate', {
+        let layer = window.world_controller.layer_controller.get_by_uuid(e.deselected[0].layer_uuid);
+        if(layer.map[e.deselected[0].asset_uuid].active) {
+          let asset_active_event = new CustomEvent('asset:deactivate', {
+            'detail': {
+              'asset_uuid': e.deselected[0].asset_uuid,
+              'layer_uuid': e.deselected[0].layer_uuid
+            }
+          });
+          self.canvas_elem.dispatchEvent(asset_active_event);
+        }
+      }
+    });
+
+    this.canvas.on('selection:created', function(e) {
+      // if the active object id does not equal id 
+      let layer = window.world_controller.layer_controller.get_by_uuid(e.selected[0].layer_uuid);
+      if(!layer.map[e.selected[0].asset_uuid].active) {
+        let asset_active_event = new CustomEvent('asset:active', {
           'detail': {
-            'asset_uuid': e.deselected[0].asset_uuid,
-            'layer_uuid': e.deselected[0].layer_uuid
+            'asset_uuid': e.selected[0].asset_uuid,
+            'layer_uuid': e.selected[0].layer_uuid
           }
         });
         self.canvas_elem.dispatchEvent(asset_active_event);
       }
-      
-    });
-
-    this.canvas.on('selection:created', function(e) {
-      
-      let asset_active_event = new CustomEvent('asset:active', {
-        'detail': {
-          'asset_uuid': e.selected[0].asset_uuid,
-          'layer_uuid': e.selected[0].layer_uuid
-        }
-      });
-      self.canvas_elem.dispatchEvent(asset_active_event);
     });
 
     this.canvas.on('selection:updated', function(e) {
-      let asset_active_event = new CustomEvent('asset:active', {
-        'detail': {
-          'asset_uuid': e.selected[0].asset_uuid,
-          'layer_uuid': e.selected[0].layer_uuid
-        }
-      });
-      self.canvas_elem.dispatchEvent(asset_active_event);
+      let a_object = self.canvas.getActiveObject();
+      if(a_object != undefined && e.selected[0].asset_uuid != a_object.asset_uuid) {
+        let asset_active_event = new CustomEvent('asset:active', {
+          'detail': {
+            'asset_uuid': e.selected[0].asset_uuid,
+            'layer_uuid': e.selected[0].layer_uuid
+          }
+        });
+        self.canvas_elem.dispatchEvent(asset_active_event);
+      }
     });
 
     this.canvas.on('')

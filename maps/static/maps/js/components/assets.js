@@ -1,3 +1,38 @@
+// tinybind.binders.asset_toggle = {
+//   publishes: true,
+//   bind: function(el) {
+//     var self = this;
+//     self.isActive = this.model.active;
+//     this.callback = function() {
+//       console.log(self.isActive);
+//       console.log(this.model.active);
+//       if(self.isActive != this.model.active) {
+//         self.publish();
+//       }
+      
+//     }
+
+//     el.addEventListener('click', this.callback);
+//   },
+
+//   unbind: function(el) {
+//     el.removeEventListener('click');
+//   },
+
+//   routine: function(el, value) {
+//     this.model.active = !self.isActive;
+//     // if the element is visible
+//     console.log('active change');
+//     if(el.parentElement.children[1] != undefined) {
+//       new bootstrap.Collapse(el.parentElement.children[1], {
+//       toggle: this.model.active
+//     });
+//     }
+    
+//   }
+// }
+
+
 class ImageAsset {
   constructor(layer_uuid, asset) {
     this.uuid = asset.uuid;
@@ -121,4 +156,6 @@ class ImageAsset {
     model.asset.update_asset();
     window.world_controller.canvas.renderAll();
   }
+
+
 }

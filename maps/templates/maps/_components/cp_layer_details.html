@@ -8,6 +8,7 @@
     {% bootstrap_form form %}
   </div>
   <div class="accordion accordion-flush pe-2" rv-show="model.is_tile_layer | not" id="layerDetailAssets" style="--bs-accordion-btn-icon-width: 0.5em;">
+    Assets
     <div class="accordion-item" rv-each-asset="model.objs"  rv-class-active="asset.active" rv-id="asset.asset_main_id">
       <div rv-show="is_detail_component">
         <h2 class="accordion-header" rv-on-click="model.set_active_object_event">
@@ -17,7 +18,9 @@
                   data-bs-toggle="collapse"
                   rv-data-bs-target="asset.asset_accordian_target_id"
                   rv-id="asset.asset_button_id">
-            <p class="p-2 overflow-hidden me-4" rv-on-blur="asset.name_change">{asset.name}</p>
+            <p class="overflow-hidden me-4 mb-0 badge w-100" rv-class-bg-secondary="asset.active | not" rv-on-blur="asset.name_change" rv-class-bg-primary="asset.active">
+              {asset.name}
+            </p>
           </button>
         </h2>
         <div rv-id="asset.asset_accordian_body_id"
