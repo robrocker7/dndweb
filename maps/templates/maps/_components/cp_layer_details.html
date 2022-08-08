@@ -3,6 +3,7 @@
   <div class="card-header">
     <span class="badge bg-primary rounded-pill float-end">{model.order}</span>
     Layer Details 
+    {model.uuid}
   </div>
   <div class="card-body">
     {% bootstrap_form form %}
@@ -18,7 +19,7 @@
                   data-bs-toggle="collapse"
                   rv-data-bs-target="asset.asset_accordian_target_id"
                   rv-id="asset.asset_button_id">
-            <p class="overflow-hidden me-4 mb-0 badge w-100" rv-class-bg-secondary="asset.active | not" rv-on-blur="asset.name_change" rv-class-bg-primary="asset.active">
+            <p class="overflow-hidden me-4 mb-0 badge w-100 asset_name" rv-class-bg-secondary="asset.active | not" rv-on-blur="asset.name_change" rv-class-bg-primary="asset.active" >
               {asset.name}
             </p>
           </button>

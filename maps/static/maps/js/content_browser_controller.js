@@ -71,11 +71,16 @@ class ContentBrowserController {
       } else {
         this.assets[i].active = false;
       }
-     
     }
   }
 
   asset_on_click_action(event, model) {
-    model.$parent.set_active_asset(model.asset.uuid);
+    let asset_active_event = new CustomEvent('asset:active', {
+      'detail': {
+        'asset_uuid': model.asset.uuid,
+        'layer_uuid': model.asset.layer_uuid
+      }
+    });
+    window.world_controller.canvas_elem.dispatchEvent(asset_active_event);
   }
 }

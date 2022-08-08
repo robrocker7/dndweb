@@ -357,37 +357,55 @@ class WorldController {
     this.check_for_tiles = false;
     this.is_left_mouse_down = false;
 
+    // document.getElementsByClassName('.asset_name').addEventListener('keyup', function(e) {
+    //   console.log('asdf');
+    // });
+    document.addEventListener('keydown', e => {
+      if (e.target.closest('.asset_name')) {
+        let current_selection = window.getSelection().toString();
+        if(event.key == 'Backspace') {
+          if((e.target.textContent.length == current_selection.length) || e.target.textContent.length == 1) {
+            e.target.textContent = ' ';
+            e.preventDefault();
+          } else if(e.target.textContent == ' ') {
+            e.preventDefault();
+          }
+          
+        }
+      }
+    });
     this.canvas_elem.addEventListener('asset:active', function (e) {
       console.log(e)
       if(e.detail.layer_uuid != undefined) {
         let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
-        let asset = layer.map[e.detail.asset_uuid];
-        // set world sidebar active state
-        window.world_controller.layer_controller.set_active_layer(layer);
+        if(layer != undefined) {
+          
+          let asset = layer.map[e.detail.asset_uuid];
+          // set world sidebar active state
+          window.world_controller.layer_controller.set_active_layer(layer);
 
-        // if the layer is not selected; then select it
-        if(window.world_controller.detail_controller.model != layer) {
-          window.world_controller.detail_controller.set_active_object(layer);
-        }
-
-        // only do this if the layer is selected
-        if(window.world_controller.detail_controller.is_detail_component) {
-          // set detail sidebar active
-          layer.set_active_object(asset);
-          let instance = bootstrap.Collapse.getOrCreateInstance(
-            document.getElementById('bu'+e.detail.asset_uuid).parentElement.parentElement.children[1]);
-          if(instance) {
-            instance.show();
+          // if the layer is not selected; then select it
+          if(window.world_controller.detail_controller.model != layer) {
+            window.world_controller.detail_controller.set_active_object(layer);
           }
+
+          // only do this if the layer is selected
+          if(window.world_controller.detail_controller.is_detail_component) {
+            // set detail sidebar active
+            layer.set_active_object(asset);
+            let instance = bootstrap.Collapse.getOrCreateInstance(
+              document.getElementById('bu'+e.detail.asset_uuid).parentElement.parentElement.children[1]);
+            if(instance) {
+              instance.show();
+            }
+          }
+          // set the active object on the canvas and render it
+          let a_object = self.canvas.getActiveObject();
+          self.canvas.setActiveObject(asset.canvas_obj);
+          self.canvas.renderAll();
         }
-
         // set the content browser active flag
-        window.world_controller.content_browser_controller.set_active_asset(asset.uuid);
-
-        // set the active object on the canvas and render it
-        let a_object = self.canvas.getActiveObject();
-        self.canvas.setActiveObject(asset.canvas_obj);
-        self.canvas.renderAll();
+        window.world_controller.content_browser_controller.set_active_asset(e.detail.asset_uuid);
         
         
       }
@@ -478,7 +496,7 @@ class WorldController {
 
     this.canvas.on('selection:updated', function(e) {
       let a_object = self.canvas.getActiveObject();
-      if(a_object != undefined && e.selected[0].asset_uuid != a_object.asset_uuid) {
+      if(a_object != undefined && e.selected[0].asset_uuid == a_object.asset_uuid) {
         let asset_active_event = new CustomEvent('asset:active', {
           'detail': {
             'asset_uuid': e.selected[0].asset_uuid,
@@ -489,7 +507,16 @@ class WorldController {
       }
     });
 
-    this.canvas.on('')
+    this.canvas.on('object:modified', function(e) {
+      let layer = window.world_controller.layer_controller.get_by_uuid(e.target.layer_uuid);
+      let asset = layer.map[e.target.asset_uuid];
+      let updated_json = asset.clean_json(asset.canvas_obj.toJSON());
+      for (const [key, value] of Object.entries(updated_json)) {
+        if(asset.asset_meta[key] != value) {
+          asset.asset_meta[key] = value;
+        }
+      }
+    });
 
 
     document.getElementById('saveMapButton').addEventListener('click', (e) => {

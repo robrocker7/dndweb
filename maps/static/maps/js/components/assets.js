@@ -65,19 +65,12 @@ class ImageAsset {
       'opacity',
       'originX',
       'originY',
-      'paintFirst',
       'scaleX',
       'scaleY',
       'shadow',
       'skewX',
       'skewY',
       'stroke',
-      'strokeDashArray',
-      'strokeDashOffset',
-      'strokeLineCap',
-      'strokeLineJoin',
-      'strokeMiterLimit',
-      'strokeUniform',
       'strokeWidth',
       'top',
       'visible',
@@ -116,7 +109,6 @@ class ImageAsset {
   setup_events() {
     var self = this;
     this.canvas_obj.on('mouseup', function (event) {
-      console.log(self.canvas_obj.toJSON());
       self.update_asset();
     });
   }
@@ -124,11 +116,13 @@ class ImageAsset {
   name_change(event, model) {
     model.asset.name = this.textContent;
     model.asset.update_asset();
+    this.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0].setAttribute('contenteditable', false);
   }
 
   set_edit_name(event, model) {
     this.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0].setAttribute('contenteditable', true);
-    select_contenteditable_text(this.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0]);
+    select_contenteditable_text(
+      this.parentElement.parentElement.parentElement.parentElement.children[0].children[0].children[0]);
   }
 
   remove(event, model) {
