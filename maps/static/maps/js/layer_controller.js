@@ -155,14 +155,8 @@ class WorldLayer {
   }
 
   add_asset(asset) { 
-    // the asset object is a dict; we need to understand what file type and
-    // create a new javascript object for each file type
-    if(asset.asset_type == 'image/jpeg' || asset.asset_type == 'image/png') {
-      var asset = new ImageAsset(this.uuid, asset);
-      asset.start_download();
-    } else {
-      console.log('No asset class for ' + asset.asset_type);
-    }
+    // start downloading the file to add to the layer
+    asset.start_download();
   }
 
   add_object(obj) {

@@ -1,0 +1,20 @@
+<div class="col-2" rv-each-asset="assets">
+  <div class="card text-dark mb-4" rv-on-click="asset_on_click_action" rv-class-bg-primary="asset.active">
+    <div class="card-header">
+      <p class="card-text text-truncate">{asset.name}</p>
+    </div>
+    <div class="image-card bg-light" rv-on-mouseover="asset_hover" rv-on-mouseout="asset_mouseout">
+      <img rv-src="asset.media_url" width="100%" rv-hide="asset.display_cb_options" />
+      <div rv-show="asset.display_cb_options">
+        <div class="d-grid gap-2 mt-4">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
+            <button type="button" class="btn btn-danger opacity-50">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer p-0 text-bg-dark font-monospace text-center text-truncate" style="font-size: 0.7em;">
+        {asset.asset_type}
+    </div>
+  </div>
+</div>

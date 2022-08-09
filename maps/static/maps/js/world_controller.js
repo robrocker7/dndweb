@@ -90,6 +90,7 @@ class WorldTile {
     this.size = size;
     const scale = this.canvas_obj.getObjectScaling();
     this.canvas_obj.set('width', parseInt(size) / scale.scaleX).set('height', parseInt(size) / scale.scaleY);
+    this.canvas_obj.set('left', this.x*parseInt(size)).set('top', this.y*parseInt(size));
     // this.update_canvas_obj({'width': size, 'height': size});
     this.canvas_obj.setCoords();
 
@@ -374,6 +375,44 @@ class WorldController {
         }
       }
     });
+
+    this.canvas_elem.addEventListener('asset:add_to_canvas', function(e) {
+      let asset = window.world_controller.content_browser_controller.asset_uuid_map[e.detail.asset_uuid];
+      if(asset == undefined) {
+        // console.log('failed to find asset '+e.detail.asset_uuid);
+        return;
+      }
+      let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
+      if(layer == undefined) {
+        // console.log('failed to find layer '+e.detail.layer_uuid);
+        return;
+      }
+      layer.add_object(asset);
+      layer.add_to_canvas(asset);
+    });
+
+    this.canvas_elem.addEventListener('asset:added', function(e) {
+      // the asset object is a dict; we need to understand what file type and
+      // create a new javascript object for each file type
+      console.log(e)
+      var asset = null;
+      if(e.detail.asset_type == 'image/jpeg' || e.detail.asset_type == 'image/png') {
+        asset = new ImageAsset(self.uuid, e.detail);
+      } else {
+        console.log('No asset class for ' + e.detail.asset_type);
+      }
+      if(asset == null) {
+        return false;
+      }
+      window.world_controller.content_browser_controller.add_asset(asset);
+      if(asset.layer_uuid != undefined || asset.layer_uuid != '') {
+        let layer = window.world_controller.layer_controller.get_by_uuid(asset.layer_uuid);
+        if(layer != undefined) {
+          layer.add_asset(asset);
+        }
+      }
+    });
+
     this.canvas_elem.addEventListener('asset:active', function (e) {
       console.log(e)
       if(e.detail.layer_uuid != undefined) {

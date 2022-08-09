@@ -17,10 +17,7 @@
   	{% csrf_token %}
 
     <div class="form-floating">
-      {% bootstrap_field form.username %}
-    </div>
-    <div class="form-floating">
-      {% bootstrap_field form.password %}
+      {% bootstrap_form form %}
     </div>
 
     <div class="checkbox mb-3">

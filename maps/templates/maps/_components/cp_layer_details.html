@@ -2,8 +2,8 @@
 <div class="card" rv-show="is_detail_component">
   <div class="card-header">
     <span class="badge bg-primary rounded-pill float-end">{model.order}</span>
-    Layer Details 
-    {model.uuid}
+    Layer Details<br/>
+    <small class="font-monospace" style="font-size: 0.7em;">{model.uuid}</small>
   </div>
   <div class="card-body">
     {% bootstrap_form form %}

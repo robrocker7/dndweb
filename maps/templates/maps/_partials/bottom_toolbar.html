@@ -16,8 +16,10 @@
             <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
               Campaign Assets
             </a>
+            {% comment %}
             <a href="#" class="list-group-item list-group-item-action disabled">My Account Assets</a>
             <a href="#" class="list-group-item list-group-item-action disabled">DdD5e API Assets</a>
+            {% endcomment %}
           </div>
         </div>
         <div class="col-10">
@@ -34,16 +36,7 @@
                 </ol>
               </nav>
               <div class="row">
-
-                <div class="col-2" rv-each-asset="assets">
-                  <div class="card text-dark" rv-on-click="asset_on_click_action" rv-class-bg-primary="asset.active">
-                    <svg class="bd-placeholder-img card-img-top" width="100px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Image cap" preserveAspectRatio="xMidYMid slice" focusable="false"><title>{asset.name}</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="50%" y="50%" fill="#dee2e6" dy=".3em">{asset.asset_type}</text></svg>
-                    <div class="card-body">
-                      <p class="card-text">{asset.name}</p>
-                    </div>
-                  </div>
-                </div>
-
+                {% include "maps/_components/cp_content_browser_item.html" %}
               </div>
             </div>
           </div>

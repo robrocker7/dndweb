@@ -41,6 +41,7 @@ class ImageAsset {
     this.layer_uuid = asset.layer_uuid;
     this.media_url = asset.asset_file;
     this.asset_meta = asset.asset_meta;
+    this.asset_type = asset.asset_type;
     this.mask = 0; // indicates imageasset    
     this.active = false; // used for ui in layer details
 
@@ -92,9 +93,13 @@ class ImageAsset {
       self.canvas_obj.layer_uuid = self.layer_uuid;
       self.canvas_obj.set({'top': 200, 'left': 200});
       self.setup_events();
-      let layer = window.world_controller.layer_controller.get_by_uuid(self.layer_uuid);
-      layer.add_object(self);
-      layer.add_to_canvas(self);
+      let asset_added_event = new CustomEvent('asset:add_to_canvas', {
+        'detail': {
+          'asset_uuid': self.uuid,
+          'layer_uuid': self.layer_uuid
+        }
+      });
+      window.world_controller.canvas_elem.dispatchEvent(asset_added_event);
     });
   }
 
@@ -134,7 +139,15 @@ class ImageAsset {
 
     }
     window.world_controller.delete_asset(model.asset.uuid);
-  } 
+  }
+
+  set_display_cb_options() {
+    if(this.hovering && this.active) {
+      this.display_cb_options = true;
+    } else {
+      this.display_cb_options = false;
+    }
+  }
 
   on_change(event, model) {
     // we lock x/y
