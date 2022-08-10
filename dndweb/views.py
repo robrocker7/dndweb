@@ -12,7 +12,3 @@ class LandingRedirectView(RedirectView):
         if self.request.user.is_authenticated:
             return reverse('campaigns:campaign_list')
         return reverse('login')
-
-
-class LoginView(RedirectView):
-    pass
