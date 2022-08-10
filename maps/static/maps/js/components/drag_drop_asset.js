@@ -6,7 +6,7 @@ class DragDropAssetUploaderComponent {
     this.is_valid_state = false;
     this.layer_name = '';
     this.layer_uuid = '';
-
+    this.block_events = false;
     this.setup_events();
   }
 
@@ -38,6 +38,10 @@ class DragDropAssetUploaderComponent {
     var self = this;
     document.getElementById(this.element_id).addEventListener('drop', function(e) {
       e.preventDefault();
+      if(self.block_events || window.world_controller.layer_controller.is_dragging) {
+        e.preventDefault();
+        return false;
+      }
       self.is_dragging = false;
       var file = null;
       if (e.dataTransfer.items) {
@@ -66,7 +70,7 @@ class DragDropAssetUploaderComponent {
       self.handle_drop_file(layer_uuid, file);
     });
     document.getElementById(this.element_id).addEventListener('dragenter', function(e) {
-      if(window.world_controller.layer_controller.is_dragging) {
+      if(self.block_events || window.world_controller.layer_controller.is_dragging) {
         e.preventDefault();
         return false;
       }

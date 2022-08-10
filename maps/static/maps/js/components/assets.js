@@ -51,6 +51,7 @@ class ImageAsset {
     this.asset_button_id = 'bu' + this.uuid;
   }
 
+
   clean_json(json_dict) {
     var keys_to_set = [
       'angle',
@@ -85,13 +86,16 @@ class ImageAsset {
     return json_dict
   }
 
-  start_download() {
+  start_download(top, left) {
     var self = this;
     fabric.Image.fromURL(this.media_url, function(oImg) {
       self.canvas_obj = oImg;
       self.canvas_obj.asset_uuid = self.uuid;
       self.canvas_obj.layer_uuid = self.layer_uuid;
-      self.canvas_obj.set({'top': 200, 'left': 200});
+      self.canvas_obj.set({'top': top, 'left': left});
+      if(!self.asset_meta) {
+        self.asset_meta = self.clean_json(self.canvas_obj.toJSON());
+      }
       self.setup_events();
       let asset_added_event = new CustomEvent('asset:add_to_canvas', {
         'detail': {
@@ -133,12 +137,9 @@ class ImageAsset {
   remove(event, model) {
     var confirmation = confirm('Are you sure you to remove this asset?');
     if(confirmation) {
-      let layer = window.world_controller.layer_controller.get_by_uuid(model.asset.layer_uuid);
-      layer.remove_from_canvas(model.asset);
-      layer.remove_object(model.asset);
-
+      window.world_controller.delete_asset(model.asset.uuid, model.asset.layer_uuid);
     }
-    window.world_controller.delete_asset(model.asset.uuid);
+    
   }
 
   set_display_cb_options() {

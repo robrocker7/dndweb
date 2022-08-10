@@ -202,7 +202,6 @@ class WorldController {
   }
 
   update_canvas_pos_cache() {
-    console.log(window.world_controller.canvas);
     localStorage.setItem('_canvasPos',
       JSON.stringify({'t': window.world_controller.canvas.viewportTransform, 'z': window.world_controller.canvas.getZoom()}));
   }
@@ -230,8 +229,6 @@ class WorldController {
     this.tile_group.setCoords();
     this.center_group(this.tile_group);
     this.canvas.renderAll();
-    
-
   }
 
   update_asset_meta(uuid, layer_uuid, layer_name, asset_json) {
@@ -254,7 +251,7 @@ class WorldController {
      .then(function(jsonResponse){console.log(jsonResponse);});
   }
 
-  delete_asset(uuid) {
+  delete_asset(uuid, layer_uuid) {
     var self = this;
     fetch("/api/maps/"+self.world_uuid+"/asset/"+uuid+"/",
       {
@@ -265,7 +262,16 @@ class WorldController {
           }
       }
     ).then(function(res){ return res.json(); })
-     .then(function(jsonResponse){console.log(jsonResponse);});
+     .then(function(jsonResponse){
+      console.log(jsonResponse);
+      let asset_remove_event = new CustomEvent('asset:removed', {
+        'detail': {
+          'asset_uuid': uuid,
+          'layer_uuid': layer_uuid
+        }
+      });
+      window.world_controller.canvas_elem.dispatchEvent(asset_remove_event);
+    });
   }
 
   populate_tiles(canvas_layer) {
@@ -387,6 +393,10 @@ class WorldController {
         // console.log('failed to find layer '+e.detail.layer_uuid);
         return;
       }
+      // if we don't have a canvas obj create one
+      if(asset.canvas_obj == undefined) {
+
+      }
       layer.add_object(asset);
       layer.add_to_canvas(asset);
     });
@@ -394,7 +404,7 @@ class WorldController {
     this.canvas_elem.addEventListener('asset:added', function(e) {
       // the asset object is a dict; we need to understand what file type and
       // create a new javascript object for each file type
-      console.log(e)
+      // console.log(e)
       var asset = null;
       if(e.detail.asset_type == 'image/jpeg' || e.detail.asset_type == 'image/png') {
         asset = new ImageAsset(self.uuid, e.detail);
@@ -413,8 +423,19 @@ class WorldController {
       }
     });
 
+    this.canvas_elem.addEventListener('asset:removed', function(e) {
+      console.log(e);
+      let asset = window.world_controller.content_browser_controller.asset_uuid_map[e.detail.asset_uuid];
+      window.world_controller.content_browser_controller.remove_asset(asset);
+      console.log(asset);
+      if(e.detail.layer_uuid) {
+        let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
+        layer.remove_from_canvas(asset);
+        layer.remove_object(asset);
+      }
+    });
+
     this.canvas_elem.addEventListener('asset:active', function (e) {
-      console.log(e)
       if(e.detail.layer_uuid != undefined) {
         let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
         if(layer != undefined) {
@@ -451,7 +472,7 @@ class WorldController {
     }, false);
 
     this.canvas_elem.addEventListener('asset:deactivate', function (e) {
-      console.log(e)
+      // console.log(e)
       if(e.detail.layer_uuid != undefined) {
         let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
         layer.map[e.detail.asset_uuid].active = false;
@@ -556,6 +577,34 @@ class WorldController {
         }
       }
     });
+
+    // this.canvas.on('dragenter', function(event) {
+    //   console.log('dragenter')
+    //   console.log(event.e.dataTransfer.getData("text"))
+    // })
+
+    // this.canvas.on('dragdrop', function(e) {
+    //   console.log(e);
+    //   console.log('dragdrop')
+    // })
+
+    this.canvas.on('drop', function(e) {
+      let asset_uuid = e.e.dataTransfer.getData("text");
+      console.log('going to drop asset onto the canvas')
+      let asset = window.world_controller.content_browser_controller.asset_uuid_map[asset_uuid];
+      let layer = window.world_controller.layer_controller.layers[0];
+      asset.layer_uuid = layer.uuid;
+      var pointer = self.canvas.getPointer(e.e);
+      console.log(pointer.x, pointer.y);
+      asset.start_download(pointer.y, pointer.x);
+      // let asset_active_event = new CustomEvent('asset:add_to_canvas', {
+      //   'detail': {
+      //     'asset_uuid': asset_uuid,
+      //     'layer_uuid': layer.uuid
+      //   }
+      // });
+      // self.canvas_elem.dispatchEvent(asset_active_event);
+    })
 
 
     document.getElementById('saveMapButton').addEventListener('click', (e) => {

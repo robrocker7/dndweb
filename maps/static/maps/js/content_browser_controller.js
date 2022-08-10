@@ -41,6 +41,23 @@ class ContentBrowserController {
 
   }
 
+  drag_start_event(event, model) {
+    console.log(event);
+    console.log(model);
+    bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasBottom')).hide();
+    window.world_controller.drag_and_drop_component.block_events = true;
+    this.style.opacity = '0.4';
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData('text/plain', model.asset.uuid);
+  }
+
+  drag_over_event(event, model) {
+    event.preventDefault();
+  }
+  drag_leave_event(event, model) {
+    console.log('item dragging; close browser')
+  }
+
   add_asset(asset) {
     if(!(asset.uuid in this.asset_uuid_map) ) {
         this.asset_uuid_map[asset.uuid] = asset;
@@ -86,6 +103,14 @@ class ContentBrowserController {
         this.assets[i].hovering = false;
         this.assets[i].set_display_cb_options();
       }
+    }
+  }
+
+  remove_asset(asset) {
+    this.assets.splice(this.assets.indexOf(asset), 1);
+    delete this.asset_uuid_map[asset.uuid];
+    if(asset.layer_uuid) {
+      this.layer_assets[asset.layer_uuid].splice(this.layer_assets[asset.layer_uuid].indexOf(asset.uuid), 1);
     }
   }
 

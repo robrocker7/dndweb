@@ -156,7 +156,7 @@ class WorldLayer {
 
   add_asset(asset) { 
     // start downloading the file to add to the layer
-    asset.start_download();
+    asset.start_download(200, 200);
   }
 
   add_object(obj) {
