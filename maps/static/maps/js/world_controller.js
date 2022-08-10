@@ -238,6 +238,7 @@ class WorldController {
       'name': layer_name,
       'asset_meta': asset_json
     }
+
     fetch("/api/maps/"+self.world_uuid+"/asset/"+uuid+"/",
       {
           method: "PUT",
@@ -278,7 +279,6 @@ class WorldController {
     var self = this;
     for (let y = 0; y < this.y; y++) {
       for (let x = 0; x < this.x; x++) {
-
         var tile = new WorldTile(x, y);
         let canvas_obj = this.world_render_context.build_rectangle(tile);
         tile.set_layer(canvas_layer, canvas_layer.objs.length);
@@ -299,7 +299,7 @@ class WorldController {
     this.tile_group.addWithUpdate();
     this.tile_layer.group = this.tile_group;
     this.canvas.add(this.tile_group);
-    this.center_group(this.tile_group);
+    //this.center_group(this.tile_group);
     
     this.canvas.renderAll();
     
@@ -394,8 +394,8 @@ class WorldController {
         return;
       }
       // if we don't have a canvas obj create one
-      if(asset.canvas_obj == undefined) {
-
+      if(asset.asset_meta == undefined) {
+        asset.asset_meta = asset.clean_json(asset.canvas_obj.toJSON());
       }
       layer.add_object(asset);
       layer.add_to_canvas(asset);
@@ -427,7 +427,6 @@ class WorldController {
       console.log(e);
       let asset = window.world_controller.content_browser_controller.asset_uuid_map[e.detail.asset_uuid];
       window.world_controller.content_browser_controller.remove_asset(asset);
-      console.log(asset);
       if(e.detail.layer_uuid) {
         let layer = window.world_controller.layer_controller.get_by_uuid(e.detail.layer_uuid);
         layer.remove_from_canvas(asset);
@@ -578,34 +577,26 @@ class WorldController {
       }
     });
 
-    // this.canvas.on('dragenter', function(event) {
-    //   console.log('dragenter')
-    //   console.log(event.e.dataTransfer.getData("text"))
-    // })
-
-    // this.canvas.on('dragdrop', function(e) {
-    //   console.log(e);
-    //   console.log('dragdrop')
-    // })
+    this.canvas.on('object:moving', function(options) { 
+      console.log(self.map_details_component.tile_size);
+      options.target.set({
+        left: (Math.round(
+          options.target.left / self.map_details_component.tile_size
+          ) * self.map_details_component.tile_size),
+        top: (Math.round(
+          options.target.top / self.map_details_component.tile_size
+          ) * self.map_details_component.tile_size),
+      });
+    });
 
     this.canvas.on('drop', function(e) {
       let asset_uuid = e.e.dataTransfer.getData("text");
-      console.log('going to drop asset onto the canvas')
       let asset = window.world_controller.content_browser_controller.asset_uuid_map[asset_uuid];
       let layer = window.world_controller.layer_controller.layers[0];
+      let pointer = self.canvas.getPointer(e.e);
       asset.layer_uuid = layer.uuid;
-      var pointer = self.canvas.getPointer(e.e);
-      console.log(pointer.x, pointer.y);
-      asset.start_download(pointer.y, pointer.x);
-      // let asset_active_event = new CustomEvent('asset:add_to_canvas', {
-      //   'detail': {
-      //     'asset_uuid': asset_uuid,
-      //     'layer_uuid': layer.uuid
-      //   }
-      // });
-      // self.canvas_elem.dispatchEvent(asset_active_event);
-    })
-
+      asset.start_download(pointer.x, pointer.y);
+    });
 
     document.getElementById('saveMapButton').addEventListener('click', (e) => {
       e.preventDefault();

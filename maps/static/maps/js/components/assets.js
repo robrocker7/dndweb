@@ -1,38 +1,3 @@
-// tinybind.binders.asset_toggle = {
-//   publishes: true,
-//   bind: function(el) {
-//     var self = this;
-//     self.isActive = this.model.active;
-//     this.callback = function() {
-//       console.log(self.isActive);
-//       console.log(this.model.active);
-//       if(self.isActive != this.model.active) {
-//         self.publish();
-//       }
-      
-//     }
-
-//     el.addEventListener('click', this.callback);
-//   },
-
-//   unbind: function(el) {
-//     el.removeEventListener('click');
-//   },
-
-//   routine: function(el, value) {
-//     this.model.active = !self.isActive;
-//     // if the element is visible
-//     console.log('active change');
-//     if(el.parentElement.children[1] != undefined) {
-//       new bootstrap.Collapse(el.parentElement.children[1], {
-//       toggle: this.model.active
-//     });
-//     }
-    
-//   }
-// }
-
-
 class ImageAsset {
   constructor(layer_uuid, asset) {
     this.uuid = asset.uuid;
@@ -51,8 +16,8 @@ class ImageAsset {
     this.asset_button_id = 'bu' + this.uuid;
   }
 
-
   clean_json(json_dict) {
+    console.log(json_dict)
     var keys_to_set = [
       'angle',
       'backgroundColor',
@@ -86,16 +51,13 @@ class ImageAsset {
     return json_dict
   }
 
-  start_download(top, left) {
+  start_download(left, top) {
     var self = this;
     fabric.Image.fromURL(this.media_url, function(oImg) {
       self.canvas_obj = oImg;
       self.canvas_obj.asset_uuid = self.uuid;
       self.canvas_obj.layer_uuid = self.layer_uuid;
-      self.canvas_obj.set({'top': top, 'left': left});
-      if(!self.asset_meta) {
-        self.asset_meta = self.clean_json(self.canvas_obj.toJSON());
-      }
+      self.canvas_obj.set({'top': top, 'left': left, 'originX': 'left', 'originY': 'bottom', 'stroke': 'white', 'stokeWidth': 2});
       self.setup_events();
       let asset_added_event = new CustomEvent('asset:add_to_canvas', {
         'detail': {

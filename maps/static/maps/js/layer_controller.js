@@ -156,7 +156,7 @@ class WorldLayer {
 
   add_asset(asset) { 
     // start downloading the file to add to the layer
-    asset.start_download(200, 200);
+    asset.start_download(0, 0);
   }
 
   add_object(obj) {
@@ -176,10 +176,11 @@ class WorldLayer {
   }
 
   add_to_canvas(obj) {
-    window.world_controller.canvas.add(obj.canvas_obj);
     if(obj.asset_meta) {
       obj.canvas_obj.set(obj.asset_meta);
     }
+
+    window.world_controller.canvas.add(obj.canvas_obj);
     obj.canvas_obj.setCoords();
     window.world_controller.canvas.moveTo(obj.canvas_obj,
       this.objs.indexOf(obj)+this.zspace);
